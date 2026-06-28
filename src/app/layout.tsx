@@ -4,7 +4,9 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import Script from "next/script";
 import { FloatingActions } from "@/components/floating-actions";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,8 +19,95 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Digital Yatra | Transforming Ideas into Digital Success",
-  description: "Digital Yatra delivers innovative web solutions, software development, digital marketing, branding, and IT consulting services that help businesses grow in the digital era.",
+  // Core
+  title: {
+    default: "Digital Yatra | Web Development, Software & Digital Marketing in Nepal",
+    template: "%s | Digital Yatra",
+  },
+  description:
+    "Digital Yatra is Nepal's premier IT agency offering web development, custom software, digital marketing, branding, IT consulting, and IT training courses. Based in Banepa, serving businesses globally.",
+  keywords: [
+    "web development Nepal",
+    "software development Banepa",
+    "digital marketing Nepal",
+    "IT company Nepal",
+    "branding Nepal",
+    "IT courses Nepal",
+    "app development Nepal",
+    "SEO Nepal",
+    "React Next.js developer Nepal",
+    "Digital Yatra",
+    "IT consulting Banepa",
+    "custom software Nepal",
+    "robotics AI training Nepal",
+  ],
+
+  // Canonical URL
+  alternates: {
+    canonical: "https://digitalyatra.com",
+  },
+
+  // Author & Publisher
+  authors: [{ name: "Digital Yatra", url: "https://digitalyatra.com" }],
+  creator: "Digital Yatra",
+  publisher: "Digital Yatra",
+
+  // Open Graph (Facebook, LinkedIn, WhatsApp previews)
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://digitalyatra.com",
+    siteName: "Digital Yatra",
+    title: "Digital Yatra | Web Development, Software & Digital Marketing in Nepal",
+    description:
+      "Nepal's premier IT agency — web development, custom software, branding, digital marketing & IT training. We build digital systems that grow your business.",
+    images: [
+      {
+        url: "https://digitalyatra.com/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Digital Yatra — Nepal's Premier IT Agency",
+      },
+    ],
+  },
+
+  // Twitter Card
+  twitter: {
+    card: "summary_large_image",
+    title: "Digital Yatra | Web Development & Digital Marketing Nepal",
+    description:
+      "Nepal's premier IT agency — web development, software, branding & digital marketing. We build systems that grow your business.",
+    images: ["https://digitalyatra.com/og-image.png"],
+    creator: "@digitalyatra",
+  },
+
+  // Robots control
+  robots: {
+    index: true,
+    follow: true,
+    nocache: false,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+
+  // Favicon & Icons
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/favicon.ico",
+  },
+
+  // App metadata
+  applicationName: "Digital Yatra",
+  category: "technology",
+  classification: "IT Services",
+  manifest: "/manifest.json",
+  themeColor: "#F7941D",
 };
 
 const jsonLd = {
@@ -31,7 +120,7 @@ const jsonLd = {
   "email": "digitalyatra.tech@gmail.com",
   "address": {
     "@type": "PostalAddress",
-    "addressLocality": "Kathmandu",
+    "addressLocality": "Banepa",
     "addressCountry": "NP"
   },
   "description": "Digital Yatra delivers innovative web solutions, software development, digital marketing, branding, and IT consulting services that help businesses grow in the digital era.",
@@ -51,9 +140,54 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <script
+        {/* Google Analytics Placeholder */}
+        <Script
+          strategy="afterInteractive"
+          src={`https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX`}
+        />
+        <Script
+          id="google-analytics"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-XXXXXXXXXX');
+            `,
+          }}
+        />
+        <Script
+          id="schema-org"
           type="application/ld+json"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <Script
+          id="tawk-to"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+              Tawk_API.onLoad = function(){
+                Tawk_API.hideWidget();
+              };
+              Tawk_API.onChatMinimized = function(){
+                Tawk_API.hideWidget();
+              };
+              Tawk_API.onChatHidden = function(){
+                Tawk_API.hideWidget();
+              };
+              (function(){
+              var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+              s1.async=true;
+              s1.src='https://embed.tawk.to/6a40b946110aba1d52a2e12b/1js6d7f7k';
+              s1.charset='UTF-8';
+              s1.setAttribute('crossorigin','*');
+              s0.parentNode.insertBefore(s1,s0);
+              })();
+            `,
+          }}
         />
       </head>
       <body className="min-h-full flex flex-col">
@@ -69,6 +203,7 @@ export default function RootLayout({
           </main>
           <Footer />
           <FloatingActions />
+          <Toaster position="bottom-right" richColors theme="system" />
         </ThemeProvider>
       </body>
     </html>

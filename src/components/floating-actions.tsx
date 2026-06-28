@@ -1,27 +1,72 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowUp, MessageCircle } from "lucide-react";
+import { ArrowUp, MessageCircle, Star, X, Bot, HelpCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { TestimonialForm } from "./TestimonialForm";
 
 export function FloatingActions() {
   const [isVisible, setIsVisible] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activeHintIndex, setActiveHintIndex] = useState(0);
+  const [isDarkLogoColor, setIsDarkLogoColor] = useState(false);
+  const hints = ["WhatsApp Support", "Give Feedback", "AI Chat Bot"];
 
   useEffect(() => {
     const handleScroll = () => {
-      // Back to top visibility
-      setIsVisible(window.scrollY > 300);
+      const scrollY = window.scrollY;
+      const winHeight = window.innerHeight;
+      const docHeight = document.documentElement.scrollHeight;
 
-      // Scroll progress
-      const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
-      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-      const scrolled = (winScroll / height) * 100;
+      setIsVisible(scrollY > 300);
+      
+      const scrolled = (scrollY / (docHeight - winHeight)) * 100;
       setScrollProgress(scrolled);
+
+      // Change button color when not in Hero (<600px) and not in Footer (bottom 600px)
+      const inHero = scrollY < 600;
+      const inFooter = scrollY + winHeight > docHeight - 600;
+      setIsDarkLogoColor(!inHero && !inFooter);
     };
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    if (isMenuOpen) return;
+    const interval = setInterval(() => {
+      setActiveHintIndex((prev) => (prev + 1) % hints.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [isMenuOpen, hints.length]);
+
+  useEffect(() => {
+    // Robustly hide Tawk.to default widget when it loads
+    const hideTawkWidget = () => {
+      if (typeof window !== "undefined" && (window as any).Tawk_API) {
+        const tawk = (window as any).Tawk_API;
+        if (tawk.hideWidget) {
+          tawk.hideWidget();
+          // Also hide it when the user minimizes the chat
+          tawk.onChatMinimized = function() {
+            tawk.hideWidget();
+          };
+        }
+      }
+    };
+
+    // Check periodically until Tawk loads
+    const checkTawk = setInterval(() => {
+      if (typeof window !== "undefined" && (window as any).Tawk_API && (window as any).Tawk_API.hideWidget) {
+        hideTawkWidget();
+        clearInterval(checkTawk);
+      }
+    }, 500);
+
+    return () => clearInterval(checkTawk);
   }, []);
 
   const scrollToTop = () => {
@@ -31,48 +76,167 @@ export function FloatingActions() {
     });
   };
 
+  const handleAiChatClick = () => {
+    if (typeof window !== "undefined" && (window as any).Tawk_API) {
+      (window as any).Tawk_API.showWidget();
+      (window as any).Tawk_API.maximize();
+    } else {
+      console.warn("Tawk.to API not found");
+    }
+    setIsMenuOpen(false);
+  };
+
   return (
     <>
       {/* Scroll Progress Bar */}
-      <div className="fixed top-0 left-0 w-full h-1 z-[60] bg-transparent">
+      <div className={`fixed top-0 left-0 w-full h-1 z-[60] bg-transparent transition-opacity duration-300 ${scrollProgress > 0 ? 'opacity-100' : 'opacity-0'}`}>
         <div 
-          className="h-full bg-secondary-500 transition-all duration-150 ease-out"
+          className="h-full bg-blue-600 dark:bg-blue-500 transition-all duration-150 ease-out"
           style={{ width: `${scrollProgress}%` }}
         />
       </div>
 
-      {/* Floating Buttons */}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-4 items-center">
+      {/* Independent Scroll to Top */}
+      <AnimatePresence>
+        {isVisible && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={scrollToTop}
+            className="fixed bottom-[150px] right-6 z-[60] w-12 h-12 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-full flex items-center justify-center shadow-lg hover:bg-white dark:hover:bg-zinc-800 transition-all hover:scale-110"
+            aria-label="Back to Top"
+          >
+            <ArrowUp className="w-5 h-5" />
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* Grouped Floating Action Button (Support & Connect) */}
+      <div className="fixed bottom-6 right-6 z-[60] flex flex-col items-end gap-3">
+        
+        {/* Expanded Options Menu */}
         <AnimatePresence>
-          {isVisible && (
-            <motion.button
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              onClick={scrollToTop}
-              className="w-12 h-12 bg-primary-900 dark:bg-white dark:text-primary-900 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-primary-600 dark:hover:bg-gray-200 transition-colors"
-              aria-label="Back to Top"
+          {isMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.9 }}
+              transition={{ duration: 0.2 }}
+              className="flex flex-col gap-3 mb-2"
             >
-              <ArrowUp className="w-5 h-5" />
-            </motion.button>
+              
+              {/* WhatsApp Option */}
+              <a
+                href="https://wa.me/9779864155993"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setIsMenuOpen(false)}
+                className="group flex items-center gap-3 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 p-2 pr-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105"
+              >
+                <div className="w-10 h-10 bg-[#25D366] text-white rounded-full flex items-center justify-center shadow-md">
+                  <MessageCircle className="w-5 h-5" />
+                </div>
+                <span className="font-semibold text-sm text-zinc-800 dark:text-zinc-200">WhatsApp Support</span>
+              </a>
+
+              {/* Feedback Option */}
+              <button
+                onClick={() => {
+                  setIsFeedbackOpen(true);
+                  setIsMenuOpen(false);
+                }}
+                className="group flex items-center gap-3 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 p-2 pr-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105"
+              >
+                <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-md">
+                  <Star className="w-5 h-5" />
+                </div>
+                <span className="font-semibold text-sm text-zinc-800 dark:text-zinc-200">Give Feedback</span>
+              </button>
+
+              {/* AI Chat Bot Option (Links to Tawk.to) */}
+              <button
+                onClick={handleAiChatClick}
+                className="group flex items-center gap-3 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 p-2 pr-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105"
+              >
+                <div className="w-10 h-10 bg-gradient-to-tr from-purple-600 to-blue-500 text-white rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(147,51,234,0.5)]">
+                  <Bot className="w-5 h-5" />
+                </div>
+                <span className="font-semibold text-sm text-zinc-800 dark:text-zinc-200">AI Chat Bot</span>
+              </button>
+
+            </motion.div>
           )}
         </AnimatePresence>
 
-        <motion.a
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          href="https://wa.me/9779864155993"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-14 h-14 bg-[#25D366] text-white rounded-full flex items-center justify-center shadow-lg hover:bg-[#1ebe57] transition-colors relative group"
-          aria-label="Chat on WhatsApp"
+        {/* Rotating Tooltip when closed */}
+        <AnimatePresence mode="wait">
+          {!isMenuOpen && (
+            <motion.div
+              key={activeHintIndex}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="absolute -top-12 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-lg whitespace-nowrap pointer-events-none border border-zinc-200 dark:border-zinc-700 flex flex-col items-center right-0"
+            >
+              {hints[activeHintIndex]}
+              {/* Small triangle pointer */}
+              <div className="absolute -bottom-1.5 right-10 w-3 h-3 bg-white dark:bg-zinc-800 border-b border-r border-zinc-200 dark:border-zinc-700 rotate-45"></div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Main Toggle Button */}
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className={`relative flex items-center gap-3 px-5 py-3 rounded-full shadow-2xl backdrop-blur-lg border border-white/20 transition-all duration-300 hover:scale-105 ${
+            isMenuOpen 
+              ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900" 
+              : isDarkLogoColor
+                ? "bg-primary-900 hover:bg-primary-950 text-white"
+                : "bg-secondary-500 hover:bg-secondary-600 text-white"
+          }`}
+          aria-label="Connect Options"
         >
-          <MessageCircle className="w-7 h-7" />
-          <span className="absolute right-full mr-4 bg-white dark:bg-gray-800 text-foreground px-3 py-1.5 rounded-lg text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-md pointer-events-none">
-            Chat with us
-          </span>
-        </motion.a>
+          {isMenuOpen ? (
+            <X className="w-5 h-5" />
+          ) : (
+            <HelpCircle className="w-5 h-5" />
+          )}
+          <span className="font-semibold">{isMenuOpen ? "Close" : "Connect"}</span>
+          
+          {/* Subtle pulse effect when closed */}
+          {!isMenuOpen && (
+            <span className="absolute inset-0 rounded-full border-2 border-blue-500 opacity-50 animate-ping pointer-events-none" />
+          )}
+        </button>
+
       </div>
+
+      {/* Feedback Modal */}
+      <AnimatePresence>
+        {isFeedbackOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl"
+            >
+              <button 
+                onClick={() => setIsFeedbackOpen(false)}
+                className="absolute top-4 right-4 p-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-white rounded-full z-10 transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              
+              <TestimonialForm />
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

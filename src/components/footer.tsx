@@ -1,5 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { Mail, Phone, MapPin, Code2, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { collection, addDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { toast } from "sonner";
 
 const FacebookIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 24 24">
@@ -26,6 +32,31 @@ const LinkedinIcon = ({ className }: { className?: string }) => (
 );
 
 export function Footer() {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+
+    setLoading(true);
+    try {
+      await addDoc(collection(db, "subscribers"), {
+        email,
+        subscribedAt: new Date()
+      });
+      toast.success("Subscribed successfully!", {
+        description: "Thank you for subscribing to our newsletter."
+      });
+      setEmail("");
+    } catch (error) {
+      console.error("Error subscribing:", error);
+      toast.error("Failed to subscribe. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <footer className="bg-primary-950 text-white pt-20 pb-10 border-t border-white/10">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -84,7 +115,7 @@ export function Footer() {
             <ul className="space-y-4 text-sm text-gray-400">
               <li className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-secondary-500 shrink-0 mt-0.5" />
-                <span>Kathmandu, Nepal</span>
+                <span>Banepa, Nepal</span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-secondary-500 shrink-0" />
@@ -98,14 +129,17 @@ export function Footer() {
 
             <div className="pt-4">
               <h4 className="text-sm font-semibold mb-3">Subscribe to Newsletter</h4>
-              <form className="flex border border-white/20 rounded-lg overflow-hidden focus-within:border-secondary-500 transition-colors">
+              <form onSubmit={handleSubscribe} className="flex border border-white/20 rounded-lg overflow-hidden focus-within:border-secondary-500 transition-colors">
                 <input 
                   type="email" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email Address" 
-                  className="bg-transparent px-4 py-2 text-sm w-full outline-none text-white placeholder:text-gray-500"
+                  className="bg-transparent px-4 py-2 text-sm w-full outline-none text-white placeholder:text-gray-500 disabled:opacity-50"
                   required
+                  disabled={loading}
                 />
-                <button type="submit" className="bg-secondary-500 px-4 py-2 text-white hover:bg-secondary-600 transition-colors">
+                <button type="submit" disabled={loading} className="bg-secondary-500 px-4 py-2 text-white hover:bg-secondary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </form>

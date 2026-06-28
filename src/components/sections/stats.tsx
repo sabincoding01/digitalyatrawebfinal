@@ -3,12 +3,18 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { CheckCircle } from "lucide-react";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 // Simple counter component that animates from 0 to target
-const Counter = ({ target, suffix = "" }: { target: number; suffix?: string }) => {
+const Counter = ({ target, suffix = "", isString = false }: { target: number | string; suffix?: string; isString?: boolean }) => {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
+    if (isString) return;
+    const numTarget = typeof target === 'string' ? parseFloat(target) : target;
+    if (isNaN(numTarget)) return;
+
     let startTime: number;
     let animationFrame: number;
     const duration = 2000; // 2 seconds
@@ -18,19 +24,22 @@ const Counter = ({ target, suffix = "" }: { target: number; suffix?: string }) =
       const progress = timestamp - startTime;
       
       if (progress < duration) {
-        const nextCount = Math.min(Math.floor((progress / duration) * target), target);
+        const nextCount = Math.min(Math.floor((progress / duration) * numTarget), numTarget);
         setCount(nextCount);
         animationFrame = requestAnimationFrame(updateCount);
       } else {
-        setCount(target);
+        setCount(numTarget);
       }
     };
 
     animationFrame = requestAnimationFrame(updateCount);
 
     return () => cancelAnimationFrame(animationFrame);
-  }, [target]);
+  }, [target, isString]);
 
+  if (isString) {
+    return <span>{target}{suffix}</span>;
+  }
   return <span>{count}{suffix}</span>;
 };
 
@@ -44,6 +53,33 @@ const benefits = [
 
 export function Stats() {
   const [isInView, setIsInView] = useState(false);
+  const [stats, setStats] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const q = query(collection(db, "stats"), orderBy("order", "asc"));
+        const snapshot = await getDocs(q);
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        if (data.length > 0) {
+          setStats(data);
+        } else {
+          // Fallback static data if empty
+          setStats([
+            { id: '1', target: 50, suffix: '+', label: 'Projects Completed' },
+            { id: '2', target: 30, suffix: '+', label: 'Happy Clients' },
+            { id: '3', target: 99, suffix: '%', label: 'Client Satisfaction' },
+            { id: '4', target: '24/7', suffix: '', label: 'Technical Support', isString: true }
+          ]);
+        }
+      } catch (error) {
+        console.error("Error fetching stats:", error);
+      }
+    };
+
+    fetchStats();
+  }, []);
 
   return (
     <section className="py-24 bg-primary-900 text-white relative overflow-hidden">
@@ -92,39 +128,22 @@ export function Stats() {
             onViewportEnter={() => setIsInView(true)}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="grid grid-cols-2 gap-6"
+            className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6"
           >
-            {/* Stat Box 1 */}
-            <div className="glass rounded-2xl p-8 border border-white/10 text-center hover:bg-white/5 transition-colors">
-              <div className="text-4xl md:text-5xl font-bold text-secondary-400 mb-2">
-                {isInView ? <Counter target={50} suffix="+" /> : "0+"}
-              </div>
-              <div className="text-sm font-medium text-gray-300 uppercase tracking-wider">Projects Completed</div>
-            </div>
-
-            {/* Stat Box 2 */}
-            <div className="glass rounded-2xl p-8 border border-white/10 text-center hover:bg-white/5 transition-colors translate-y-8">
-              <div className="text-4xl md:text-5xl font-bold text-accent-400 mb-2">
-                {isInView ? <Counter target={30} suffix="+" /> : "0+"}
-              </div>
-              <div className="text-sm font-medium text-gray-300 uppercase tracking-wider">Happy Clients</div>
-            </div>
-
-            {/* Stat Box 3 */}
-            <div className="glass rounded-2xl p-8 border border-white/10 text-center hover:bg-white/5 transition-colors">
-              <div className="text-4xl md:text-5xl font-bold text-secondary-400 mb-2">
-                {isInView ? <Counter target={99} suffix="%" /> : "0%"}
-              </div>
-              <div className="text-sm font-medium text-gray-300 uppercase tracking-wider">Client Satisfaction</div>
-            </div>
-
-            {/* Stat Box 4 */}
-            <div className="glass rounded-2xl p-8 border border-white/10 text-center hover:bg-white/5 transition-colors translate-y-8">
-              <div className="text-4xl md:text-5xl font-bold text-accent-400 mb-2">
-                24/7
-              </div>
-              <div className="text-sm font-medium text-gray-300 uppercase tracking-wider">Technical Support</div>
-            </div>
+            {stats.map((stat, index) => {
+              const isEven = index % 2 === 1;
+              const textColorClass = index % 2 === 0 ? "text-secondary-400" : "text-accent-400";
+              const translateYClass = isEven ? "sm:translate-y-8" : "";
+              
+              return (
+                <div key={stat.id} className={`glass rounded-2xl p-6 sm:p-8 border border-white/10 text-center hover:bg-white/5 transition-colors ${translateYClass}`}>
+                  <div className={`text-4xl md:text-5xl font-bold mb-2 ${textColorClass}`}>
+                    {isInView ? <Counter target={stat.target} suffix={stat.suffix} isString={stat.isString} /> : "0"}
+                  </div>
+                  <div className="text-xs sm:text-sm font-medium text-gray-300 uppercase tracking-wider">{stat.label}</div>
+                </div>
+              );
+            })}
           </motion.div>
 
         </div>

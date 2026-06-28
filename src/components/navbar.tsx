@@ -4,15 +4,16 @@ import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { Moon, Sun, Menu, X, Code2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 const navLinks = [
-  { name: "Home", href: "#home" },
-  { name: "About", href: "#about" },
-  { name: "Services", href: "#services" },
-  { name: "Expertise", href: "#expertise" },
-  { name: "Process", href: "#process" },
-  { name: "Contact", href: "#contact" },
+  { name: "Home", href: "/" },
+  { name: "About", href: "/#about" },
+  { name: "Services", href: "/#services" },
+  { name: "Expertise", href: "/#expertise" },
+  { name: "Process", href: "/#process" },
+  { name: "Contact", href: "/#contact" },
 ];
 
 export function Navbar() {
@@ -20,6 +21,10 @@ export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
+
+  const isHome = pathname === "/";
+  const shouldBeSolid = isScrolled || !isHome;
 
   useEffect(() => {
     setMounted(true);
@@ -37,6 +42,14 @@ export function Navbar() {
   const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
     setIsMobileMenuOpen(false);
+
+    // If it's a plain path (e.g. "/", "/blog", "/careers"), do a normal navigation
+    if (!href.startsWith("#")) {
+      window.location.href = href;
+      return;
+    }
+
+    // It's a hash — scroll to the section
     const element = document.querySelector(href);
     if (element) {
       const offsetTop = element.getBoundingClientRect().top + window.scrollY - 80;
@@ -50,7 +63,7 @@ export function Navbar() {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled
+        shouldBeSolid
           ? "bg-background/80 backdrop-blur-md border-b border-white/10 shadow-sm"
           : "bg-transparent"
       }`}
@@ -62,7 +75,7 @@ export function Navbar() {
             <img src="/logo.png" alt="Digital Yatra Logo" className="h-10 sm:h-12 w-auto" />
             <div className="font-bold tracking-widest text-lg sm:text-xl flex gap-1.5 items-center mt-1">
               <span className="text-[#F7941D]">DIGITAL</span>
-              <span className={`transition-colors duration-300 ${isScrolled ? "text-primary-950 dark:text-white" : "text-white"}`}>
+              <span className={`transition-colors duration-300 ${shouldBeSolid ? "text-primary-950 dark:text-white" : "text-white"}`}>
                 YATRA
               </span>
             </div>
@@ -76,26 +89,26 @@ export function Navbar() {
                 href={link.href}
                 onClick={(e) => scrollToSection(e, link.href)}
                 className={`text-sm font-medium transition-colors hover:text-secondary-500 ${
-                  isScrolled ? "text-foreground/80" : "text-white/90"
+                  shouldBeSolid ? "text-foreground/80" : "text-white/90"
                 }`}
               >
                 {link.name}
               </a>
             ))}
             
-            <div className={`flex items-center gap-4 border-l pl-4 ${isScrolled ? "border-foreground/10" : "border-white/20"}`}>
+            <div className={`flex items-center gap-4 border-l pl-4 ${shouldBeSolid ? "border-foreground/10" : "border-white/20"}`}>
               {mounted && (
                 <button
                   onClick={toggleTheme}
                   className={`p-2 rounded-full transition-colors ${
-                    isScrolled ? "hover:bg-foreground/5" : "hover:bg-white/10"
+                    shouldBeSolid ? "hover:bg-foreground/5" : "hover:bg-white/10"
                   }`}
                   aria-label="Toggle Theme"
                 >
                   {theme === "dark" ? (
                     <Sun className="w-5 h-5 text-yellow-400" />
                   ) : (
-                    <Moon className={`w-5 h-5 ${isScrolled ? "text-primary-900" : "text-white"}`} />
+                    <Moon className={`w-5 h-5 ${shouldBeSolid ? "text-primary-900 dark:text-white" : "text-white"}`} />
                   )}
                 </button>
               )}
@@ -115,26 +128,26 @@ export function Navbar() {
               <button
                 onClick={toggleTheme}
                 className={`p-2 rounded-full transition-colors ${
-                  isScrolled ? "hover:bg-foreground/5" : "hover:bg-white/10"
+                  shouldBeSolid ? "hover:bg-foreground/5" : "hover:bg-white/10"
                 }`}
               >
                 {theme === "dark" ? (
                   <Sun className="w-5 h-5 text-yellow-400" />
                 ) : (
-                  <Moon className={`w-5 h-5 ${isScrolled ? "text-primary-900" : "text-white"}`} />
+                  <Moon className={`w-5 h-5 ${shouldBeSolid ? "text-primary-900 dark:text-white" : "text-white"}`} />
                 )}
               </button>
             )}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className={`p-2 rounded-md transition-colors ${
-                isScrolled ? "hover:bg-foreground/5" : "hover:bg-white/10"
+                shouldBeSolid ? "hover:bg-foreground/5" : "hover:bg-white/10"
               }`}
             >
               {isMobileMenuOpen ? (
-                <X className={`w-6 h-6 ${isScrolled ? "text-foreground" : "text-white"}`} />
+                <X className={`w-6 h-6 ${shouldBeSolid ? "text-foreground" : "text-white"}`} />
               ) : (
-                <Menu className={`w-6 h-6 ${isScrolled ? "text-foreground" : "text-white"}`} />
+                <Menu className={`w-6 h-6 ${shouldBeSolid ? "text-foreground" : "text-white"}`} />
               )}
             </button>
           </div>

@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /api/*
+Disallow: /_next/*
+
+# Sitemap location
+Sitemap: https://digitalyatra.com/sitemap.xml
+
+# Crawl delay to prevent overloading
+Crawl-delay: 10

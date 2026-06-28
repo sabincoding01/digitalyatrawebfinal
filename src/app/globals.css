@@ -30,7 +30,7 @@
 }
 
 /* For next-themes dark mode */
-[data-theme="dark"] {
+.dark {
   --background: #04121e;
   --foreground: #f8fafc;
 }

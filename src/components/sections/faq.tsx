@@ -36,7 +36,7 @@ export function FAQ() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="sticky top-28"
+            className="sticky top-32 z-10 bg-gray-50/90 dark:bg-primary-950/90 backdrop-blur-sm py-4"
           >
             <span className="text-secondary-500 font-semibold tracking-wider uppercase text-sm">Got Questions?</span>
             <h2 className="text-3xl md:text-5xl font-bold mt-2 mb-6 text-foreground">

@@ -1,42 +1,42 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { motion } from "framer-motion";
-import { Monitor, Smartphone, LayoutTemplate, Megaphone, Palette, Server } from "lucide-react";
-
-const services = [
-  {
-    icon: Monitor,
-    title: "Web Development",
-    description: "Custom websites, business websites, e-commerce platforms, and web applications built with cutting-edge technologies.",
-  },
-  {
-    icon: Smartphone,
-    title: "Mobile App Development",
-    description: "Scalable and intuitive Android and iOS applications that provide seamless user experiences across devices.",
-  },
-  {
-    icon: LayoutTemplate,
-    title: "UI/UX Design",
-    description: "User-centered interfaces focused on usability, accessibility, and high engagement to delight your customers.",
-  },
-  {
-    icon: Megaphone,
-    title: "Digital Marketing",
-    description: "Data-driven SEO, social media marketing, and paid advertising solutions to boost your online visibility.",
-  },
-  {
-    icon: Palette,
-    title: "Graphic Design & Branding",
-    description: "Memorable logo design, brand identity, marketing creatives, and promotional materials that stand out.",
-  },
-  {
-    icon: Server,
-    title: "IT Consulting",
-    description: "Strategic technology guidance and digital transformation planning to optimize your business operations.",
-  },
-];
+import * as Icons from "lucide-react";
 
 export function Services() {
+  const [services, setServices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const q = query(collection(db, "services"), orderBy("createdAt", "asc"));
+        const snapshot = await getDocs(q);
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setServices(data);
+      } catch (error) {
+        console.error("Error fetching services:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchServices();
+  }, []);
+
+  if (loading) {
+    return (
+      <section id="services" className="py-24 bg-gray-50 dark:bg-primary-950/20 flex justify-center">
+        <div className="w-8 h-8 border-4 border-secondary-500 border-t-transparent rounded-full animate-spin"></div>
+      </section>
+    );
+  }
+
+  if (services.length === 0) return null;
+
   return (
     <section id="services" className="py-24 bg-gray-50 dark:bg-primary-950/20">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -52,15 +52,16 @@ export function Services() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map((service, index) => {
-            const Icon = service.icon;
+            // @ts-ignore
+            const Icon = Icons[service.icon] || Icons.Monitor;
             return (
               <motion.div
-                key={index}
+                key={service.id}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="group relative p-8 rounded-2xl bg-white dark:bg-primary-950 border border-gray-200 dark:border-white/5 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden"
+                className="group relative p-6 sm:p-8 rounded-2xl bg-white dark:bg-primary-950 border border-gray-200 dark:border-white/5 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden"
               >
                 {/* Hover Gradient Background */}
                 <div className="absolute inset-0 bg-gradient-to-br from-primary-900 to-primary-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-0" />

@@ -3,15 +3,14 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, Phone, MapPin, Send, MessageCircle } from "lucide-react";
+import { toast } from "sonner";
 
 export function Contact() {
-  const [result, setResult] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setStatus("loading");
-    setResult("");
     
     const formData = new FormData(event.currentTarget);
     formData.append("access_key", process.env.NEXT_PUBLIC_WEB3FORMS_KEY || "YOUR_ACCESS_KEY_HERE");
@@ -26,15 +25,22 @@ export function Contact() {
 
       if (data.success) {
         setStatus("success");
-        setResult("Thank you! Your message has been sent successfully.");
+        toast.success("Message Sent!", {
+          description: "Thank you! We will get back to you shortly."
+        });
         (event.target as HTMLFormElement).reset();
+        setTimeout(() => setStatus("idle"), 3000);
       } else {
         setStatus("error");
-        setResult(data.message || "Something went wrong. Please try again.");
+        toast.error("Failed to send", {
+          description: data.message || "Something went wrong. Please try again."
+        });
       }
     } catch (error) {
       setStatus("error");
-      setResult("Network error. Please try again later.");
+      toast.error("Network Error", {
+        description: "Please check your connection and try again."
+      });
     }
   };
 
@@ -104,7 +110,7 @@ export function Contact() {
                   </div>
                   <div>
                     <h4 className="font-semibold text-gray-300 text-sm mb-1">Location</h4>
-                    <span className="text-lg">Kathmandu, Nepal</span>
+                    <span className="text-lg">Banepa, Nepal</span>
                   </div>
                 </div>
               </div>
@@ -117,7 +123,7 @@ export function Contact() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="lg:col-span-2 bg-white dark:bg-primary-950/40 p-8 md:p-12 rounded-2xl border border-gray-200 dark:border-white/5 shadow-lg"
+            className="lg:col-span-2 bg-white dark:bg-primary-950/40 p-6 sm:p-8 md:p-12 rounded-2xl border border-gray-200 dark:border-white/5 shadow-lg"
           >
             <form onSubmit={onSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -195,12 +201,6 @@ export function Contact() {
                 {status === "loading" ? "Sending..." : "Send Message"}
                 {status !== "loading" && <Send className="w-5 h-5" />}
               </button>
-
-              {result && (
-                <div className={`mt-4 p-4 rounded-lg text-center font-medium ${status === "success" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                  {result}
-                </div>
-              )}
             </form>
           </motion.div>
         </div>

@@ -35,14 +35,14 @@ export function About() {
               />
               
               {/* 10+ Years Experience Block */}
-              <div className="absolute bottom-6 left-6 right-6 p-6 rounded-xl bg-white dark:bg-primary-950 shadow-2xl z-10 border border-gray-100 dark:border-white/5">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full bg-secondary-500 text-white flex items-center justify-center font-bold text-2xl shrink-0">
+              <div className="absolute bottom-4 left-4 right-4 p-4 sm:bottom-6 sm:left-6 sm:right-6 sm:p-6 rounded-xl bg-white dark:bg-primary-950 shadow-2xl z-10 border border-gray-100 dark:border-white/5">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-secondary-500 text-white flex items-center justify-center font-bold text-xl sm:text-2xl shrink-0">
                     10+
                   </div>
                   <div>
-                    <h4 className="font-bold text-lg text-gray-900 dark:text-white">Years Experience</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">In Digital Transformation</p>
+                    <h4 className="font-bold text-base sm:text-lg text-gray-900 dark:text-white">Years Experience</h4>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">In Digital Transformation</p>
                   </div>
                 </div>
               </div>
