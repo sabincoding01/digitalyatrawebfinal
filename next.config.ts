@@ -45,7 +45,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.tawk.to",
       "font-src 'self' https://fonts.gstatic.com https://*.tawk.to",
       "img-src 'self' data: blob: https: http:",
-      "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://firestore.googleapis.com wss://*.firebaseio.com https://*.tawk.to wss://*.tawk.to https://www.google-analytics.com https://analytics.google.com https://stats.g.doubleclick.net https://www.google.com https://api.web3forms.com https://region1.google-analytics.com",
+      "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://firestore.googleapis.com wss://*.firebaseio.com https://*.tawk.to wss://*.tawk.to https://www.google-analytics.com https://analytics.google.com https://stats.g.doubleclick.net https://www.google.com https://api.web3forms.com https://region1.google-analytics.com https://firebasestorage.googleapis.com",
       "frame-src 'self' https://embed.tawk.to",
       "worker-src 'self' blob:",
       "object-src 'none'",
@@ -73,6 +73,8 @@ const nextConfig: NextConfig = {
   compress: true,
   // Enable React strict mode for better error detection
   reactStrictMode: true,
+  // Enable source maps for easier debugging
+  productionBrowserSourceMaps: true,
 };
 
 export default nextConfig;

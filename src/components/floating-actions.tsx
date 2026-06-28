@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowUp, MessageCircle, Star, X, Bot, HelpCircle } from "lucide-react";
+import { ArrowUp, MessageCircle, Star, X, HelpCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { TestimonialForm } from "./TestimonialForm";
 
@@ -12,7 +12,7 @@ export function FloatingActions() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeHintIndex, setActiveHintIndex] = useState(0);
   const [isDarkLogoColor, setIsDarkLogoColor] = useState(false);
-  const hints = ["WhatsApp Support", "Give Feedback", "AI Chat Bot"];
+  const hints = ["WhatsApp Support", "Give Feedback"];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -43,47 +43,11 @@ export function FloatingActions() {
     return () => clearInterval(interval);
   }, [isMenuOpen, hints.length]);
 
-  useEffect(() => {
-    // Robustly hide Tawk.to default widget when it loads
-    const hideTawkWidget = () => {
-      if (typeof window !== "undefined" && (window as any).Tawk_API) {
-        const tawk = (window as any).Tawk_API;
-        if (tawk.hideWidget) {
-          tawk.hideWidget();
-          // Also hide it when the user minimizes the chat
-          tawk.onChatMinimized = function() {
-            tawk.hideWidget();
-          };
-        }
-      }
-    };
-
-    // Check periodically until Tawk loads
-    const checkTawk = setInterval(() => {
-      if (typeof window !== "undefined" && (window as any).Tawk_API && (window as any).Tawk_API.hideWidget) {
-        hideTawkWidget();
-        clearInterval(checkTawk);
-      }
-    }, 500);
-
-    return () => clearInterval(checkTawk);
-  }, []);
-
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
       behavior: "smooth",
     });
-  };
-
-  const handleAiChatClick = () => {
-    if (typeof window !== "undefined" && (window as any).Tawk_API) {
-      (window as any).Tawk_API.showWidget();
-      (window as any).Tawk_API.maximize();
-    } else {
-      console.warn("Tawk.to API not found");
-    }
-    setIsMenuOpen(false);
   };
 
   return (
@@ -133,6 +97,7 @@ export function FloatingActions() {
                 rel="noopener noreferrer"
                 onClick={() => setIsMenuOpen(false)}
                 className="group flex items-center gap-3 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 p-2 pr-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                aria-label="WhatsApp Support"
               >
                 <div className="w-10 h-10 bg-[#25D366] text-white rounded-full flex items-center justify-center shadow-md">
                   <MessageCircle className="w-5 h-5" />
@@ -147,22 +112,12 @@ export function FloatingActions() {
                   setIsMenuOpen(false);
                 }}
                 className="group flex items-center gap-3 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 p-2 pr-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                aria-label="Give Feedback"
               >
                 <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-md">
                   <Star className="w-5 h-5" />
                 </div>
                 <span className="font-semibold text-sm text-zinc-800 dark:text-zinc-200">Give Feedback</span>
-              </button>
-
-              {/* AI Chat Bot Option (Links to Tawk.to) */}
-              <button
-                onClick={handleAiChatClick}
-                className="group flex items-center gap-3 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 p-2 pr-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105"
-              >
-                <div className="w-10 h-10 bg-gradient-to-tr from-purple-600 to-blue-500 text-white rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(147,51,234,0.5)]">
-                  <Bot className="w-5 h-5" />
-                </div>
-                <span className="font-semibold text-sm text-zinc-800 dark:text-zinc-200">AI Chat Bot</span>
               </button>
 
             </motion.div>

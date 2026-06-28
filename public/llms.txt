@@ -1,0 +1,17 @@
+# Digital Yatra
+
+Digital Yatra is a Nepal-based IT agency specializing in custom web applications, mobile apps, digital branding, software development, and IT courses. We serve startups and small businesses globally with transparent pricing, direct founder-level communication, and rapid turnaround.
+
+## Contact Information
+- **Location:** Banepa, Nepal
+- **Established:** 2024
+- **Phone:** +977 9864155993
+- **Email:** digitalyatra.tech@gmail.com
+- **Website:** https://digitalyatranepal.netlify.app
+
+## Services Offered
+1. **Web Development:** High-performance React, Next.js, and Node.js custom websites and web portals.
+2. **Mobile Applications:** iOS and Android development using React Native and Flutter.
+3. **UI/UX Design:** Figma interface designs, logo creation, branding, and graphics.
+4. **Digital Marketing:** Organic Search Engine Optimization (SEO), Social Media Marketing (SMM), and Pay-Per-Click (PPC).
+5. **IT Courses:** Professional IT training courses, including Web Development and Digital Marketing.

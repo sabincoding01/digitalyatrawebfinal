@@ -4,6 +4,8 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, Phone, MapPin, Send, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export function Contact() {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -13,15 +15,37 @@ export function Contact() {
     setStatus("loading");
     
     const formData = new FormData(event.currentTarget);
+    const name = formData.get("name") as string;
+    const email = formData.get("email") as string;
+    const phone = formData.get("phone") as string;
+    const service = formData.get("service") as string;
+    const message = formData.get("message") as string;
+
     formData.append("access_key", process.env.NEXT_PUBLIC_WEB3FORMS_KEY || "YOUR_ACCESS_KEY_HERE");
 
     try {
+      // Send email via Web3Forms
       const response = await fetch("https://api.web3forms.com/submit", {
         method: "POST",
         body: formData
       });
 
       const data = await response.json();
+
+      // Save to Firebase regardless of Web3Forms result
+      try {
+        await addDoc(collection(db, "contacts"), {
+          name,
+          email,
+          phone,
+          service,
+          message,
+          status: "new",
+          createdAt: serverTimestamp(),
+        });
+      } catch (fbErr) {
+        console.error("Firebase save error:", fbErr);
+      }
 
       if (data.success) {
         setStatus("success");

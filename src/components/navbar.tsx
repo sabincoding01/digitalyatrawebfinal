@@ -6,6 +6,7 @@ import { Moon, Sun, Menu, X, Code2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 const navLinks = [
   { name: "Home", href: "/" },
@@ -72,7 +73,7 @@ export function Navbar() {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link href="#home" onClick={(e) => scrollToSection(e, "#home")} className="flex items-center gap-3 group">
-            <img src="/logo.png" alt="Digital Yatra Logo" className="h-10 sm:h-12 w-auto" />
+            <Image src="/logo.png" alt="Digital Yatra Logo" width={48} height={48} className="h-10 sm:h-12 w-auto object-contain" priority />
             <div className="font-bold tracking-widest text-lg sm:text-xl flex gap-1.5 items-center mt-1">
               <span className="text-[#F7941D]">DIGITAL</span>
               <span className={`transition-colors duration-300 ${shouldBeSolid ? "text-primary-950 dark:text-white" : "text-white"}`}>
@@ -143,6 +144,7 @@ export function Navbar() {
               className={`p-2 rounded-md transition-colors ${
                 shouldBeSolid ? "hover:bg-foreground/5" : "hover:bg-white/10"
               }`}
+              aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
             >
               {isMobileMenuOpen ? (
                 <X className={`w-6 h-6 ${shouldBeSolid ? "text-foreground" : "text-white"}`} />

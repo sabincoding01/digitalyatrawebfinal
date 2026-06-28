@@ -13,7 +13,7 @@
   --color-primary-950: #04121e;
 
   --color-secondary-400: #fca33a;
-  --color-secondary-500: #f7941d; /* Vibrant Orange */
+  --color-secondary-500: #be5e00; /* WCAG AA Compliant Vibrant Orange */
   --color-secondary-600: #d67a0f;
 
   --color-accent-400: #33ecff;
@@ -72,3 +72,35 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #f7941d;
 }
+
+/* GPU accelerated animations */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spin-reverse-slow {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px) translateX(0px); }
+  50% { transform: translateY(-10px) translateX(5px); }
+}
+
+@utility animate-spin-slow {
+  animation: spin-slow 30s linear infinite;
+  will-change: transform;
+}
+
+@utility animate-spin-reverse-slow {
+  animation: spin-reverse-slow 40s linear infinite;
+  will-change: transform;
+}
+
+@utility animate-float-slow {
+  animation: float-slow 6s ease-in-out infinite;
+  will-change: transform;
+}
+

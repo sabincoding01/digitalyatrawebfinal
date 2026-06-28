@@ -7,6 +7,33 @@ import { motion } from "framer-motion";
 import { ExternalLink, Code, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
+const defaultProjects = [
+  {
+    id: "default-1",
+    title: "E-Commerce Web Portal",
+    category: "Web Application",
+    description: "Problem: Client needed a fast shop to sell handicraft items. Solution: Developed a Next.js shop with 0.8s load time and direct checkout.",
+    techStack: "Next.js, Tailwind CSS, Stripe",
+    thumbnailUrl: ""
+  },
+  {
+    id: "default-2",
+    title: "SaaS Analytics Dashboard",
+    category: "Software Development",
+    description: "Problem: Needed to visualize high-frequency IoT data. Solution: Built a real-time responsive dashboard with chart indicators.",
+    techStack: "React, Node.js, Chart.js",
+    thumbnailUrl: ""
+  },
+  {
+    id: "default-3",
+    title: "Local Business Delivery App",
+    category: "Mobile Application",
+    description: "Problem: Restaurant wanted to cut out commission layers. Solution: Created a lightweight mobile app with order dispatch.",
+    techStack: "React Native, Firebase, Maps API",
+    thumbnailUrl: ""
+  }
+];
+
 export function Projects() {
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,9 +44,14 @@ export function Projects() {
         const q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
         const snapshot = await getDocs(q);
         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setProjects(data);
+        if (data.length > 0) {
+          setProjects(data);
+        } else {
+          setProjects(defaultProjects);
+        }
       } catch (error) {
         console.error("Error fetching projects:", error);
+        setProjects(defaultProjects);
       } finally {
         setLoading(false);
       }
@@ -35,8 +67,6 @@ export function Projects() {
       </section>
     );
   }
-
-  if (projects.length === 0) return null;
 
   return (
     <section id="projects" className="py-24 bg-gray-50 dark:bg-primary-950/20">
@@ -64,14 +94,14 @@ export function Projects() {
               <div className="h-56 bg-zinc-100 dark:bg-zinc-800 relative overflow-hidden flex items-center justify-center">
                 {project.thumbnailUrl ? (
                   /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={project.thumbnailUrl} alt={project.title} className="w-full h-full object-cover" />
+                  <img src={project.thumbnailUrl} alt={project.title} width={600} height={400} className="w-full h-full object-cover" />
                 ) : (
-                  <Code className="w-24 h-24 text-zinc-300 dark:text-zinc-700" />
+                  <Code className="w-24 h-24 text-zinc-300 dark:text-zinc-700" aria-hidden="true" />
                 )}
                 
                 <div className="absolute inset-0 bg-primary-900/0 group-hover:bg-primary-900/60 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
                   {project.link && (
-                    <a href={project.link} target="_blank" rel="noopener noreferrer" className="p-3 bg-secondary-500 rounded-full text-white hover:scale-110 transition-transform">
+                    <a href={project.link} target="_blank" rel="noopener noreferrer" className="p-3 bg-secondary-500 rounded-full text-white hover:scale-110 transition-transform" aria-label={`View live site for ${project.title}`}>
                       <ExternalLink className="w-6 h-6" />
                     </a>
                   )}
@@ -85,12 +115,29 @@ export function Projects() {
                 <h3 className="text-xl font-bold mb-3 text-foreground">
                   {project.title}
                 </h3>
-                <p className="text-foreground/70 leading-relaxed flex-grow">
+                <p className="text-foreground/70 leading-relaxed flex-grow text-sm">
                   {project.description}
                 </p>
-                <Link href={`/projects/${project.id}`} className="mt-6 inline-flex items-center gap-2 text-secondary-500 font-semibold text-sm group/link">
-                  Read Case Study <ArrowRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
-                </Link>
+                
+                {project.techStack && (
+                  <div className="flex flex-wrap gap-1.5 mt-4">
+                    {project.techStack.split(",").map((tech: string) => (
+                      <span key={tech} className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-primary-900 rounded text-foreground/75 font-medium">
+                        {tech.trim()}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                
+                {project.id.startsWith("default-") ? (
+                  <a href="#contact" className="mt-6 inline-flex items-center gap-2 text-secondary-500 font-semibold text-sm group/link">
+                    Inquire About Service <ArrowRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" aria-hidden="true" />
+                  </a>
+                ) : (
+                  <Link href={`/projects/${project.id}`} className="mt-6 inline-flex items-center gap-2 text-secondary-500 font-semibold text-sm group/link">
+                    Read Case Study <ArrowRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" aria-hidden="true" />
+                  </Link>
+                )}
               </div>
             </motion.div>
           ))}

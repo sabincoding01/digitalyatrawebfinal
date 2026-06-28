@@ -77,7 +77,7 @@ export const metadata: Metadata = {
     title: "Digital Yatra | Web Development & Digital Marketing Nepal",
     description:
       "Nepal's premier IT agency — web development, software, branding & digital marketing. We build systems that grow your business.",
-    images: ["https://digitalyatra.com/og-image.png"],
+    images: ["https://digitalyatranepal.netlify.app/og-image.png"],
     creator: "@digitalyatra",
   },
 
@@ -115,7 +115,7 @@ export const metadata: Metadata = {
 
 const jsonLd = {
   "@context": "https://schema.org",
-  "@type": "ITService",
+  "@type": "LocalBusiness",
   "name": "Digital Yatra",
   "image": "https://digitalyatranepal.netlify.app/logo.png",
   "@id": "https://digitalyatranepal.netlify.app",
@@ -124,12 +124,21 @@ const jsonLd = {
   "email": "digitalyatra.tech@gmail.com",
   "address": {
     "@type": "PostalAddress",
+    "streetAddress": "Banepa",
     "addressLocality": "Banepa",
+    "addressRegion": "Bagmati",
     "addressCountry": "NP"
   },
-  "description": "Digital Yatra delivers innovative web solutions, software development, digital marketing, branding, and IT consulting services that help businesses grow in the digital era.",
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": 27.6333,
+    "longitude": 85.5167
+  },
+  "description": "Digital Yatra is a Nepal-based IT agency offering web development, custom software, digital marketing, branding, IT consulting, and IT training. We serve startups and small businesses with fast turnaround and transparent pricing.",
   "priceRange": "$$",
-  "openingHours": "Mo,Tu,We,Th,Fr 09:00-18:00"
+  "openingHours": "Mo,Tu,We,Th,Fr 09:00-18:00",
+  "foundingDate": "2024",
+  "areaServed": ["Nepal", "Global"]
 };
 
 export default function RootLayout({
@@ -168,32 +177,6 @@ export default function RootLayout({
           type="application/ld+json"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-        <Script
-          id="tawk-to"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-              Tawk_API.onLoad = function(){
-                Tawk_API.hideWidget();
-              };
-              Tawk_API.onChatMinimized = function(){
-                Tawk_API.hideWidget();
-              };
-              Tawk_API.onChatHidden = function(){
-                Tawk_API.hideWidget();
-              };
-              (function(){
-              var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-              s1.async=true;
-              s1.src='https://embed.tawk.to/6a40b946110aba1d52a2e12b/1js6d7f7k';
-              s1.charset='UTF-8';
-              s1.setAttribute('crossorigin','*');
-              s0.parentNode.insertBefore(s1,s0);
-              })();
-            `,
-          }}
         />
       </head>
       <body className="min-h-full flex flex-col">

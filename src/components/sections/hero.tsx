@@ -21,7 +21,6 @@ export function Hero() {
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-600/10 blur-[150px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-secondary-500/10 blur-[150px]" />
         <div className="absolute top-[40%] right-[10%] w-[30%] h-[30%] rounded-full bg-accent-500/10 blur-[120px]" />
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 mix-blend-overlay"></div>
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -31,7 +30,7 @@ export function Hero() {
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
             className="space-y-5 sm:space-y-6 max-w-xl mx-auto lg:mx-0 text-center lg:text-left"
           >
             {/* Pill badge */}
@@ -41,19 +40,19 @@ export function Hero() {
               transition={{ delay: 0.2, duration: 0.5 }}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-white/10 text-xs font-medium text-accent-400 shadow-[0_0_15px_rgba(0,229,255,0.15)]"
             >
-              <Fingerprint className="w-3.5 h-3.5" />
-              <span>Next-Gen Digital Solutions</span>
+              <Fingerprint className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Nepal-Based IT Agency · Fast Turnaround · Transparent Pricing</span>
             </motion.div>
             
             <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold leading-[1.15] tracking-tight text-white">
-              We Build Digital Systems That <br className="hidden lg:block" />
+              Your Digital Partner<br className="hidden lg:block" />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-secondary-400 via-secondary-500 to-orange-600">
-                Grow Your Business
+                {" "}Built in Nepal, Ready for the World
               </span>
             </h1>
             
-            <p className="text-sm sm:text-base md:text-lg text-gray-400 leading-relaxed font-light">
-              We help businesses scale with modern websites, custom software solutions, branding, and digital marketing strategies that deliver real results.
+            <p className="text-sm sm:text-base md:text-lg text-gray-300 leading-relaxed font-light">
+              We're a Banepa-based IT agency building websites, apps, and digital strategies for startups and small businesses. Direct founder-level communication. No layers, no fluff — just results delivered on time.
             </p>
             
             {/* CTA Buttons */}
@@ -63,29 +62,26 @@ export function Hero() {
                 className="px-6 py-3 sm:py-3.5 rounded-xl bg-gradient-to-r from-secondary-500 to-secondary-600 hover:to-orange-600 text-white font-medium flex items-center justify-center gap-2 transition-all hover:gap-3 hover:shadow-[0_0_25px_rgba(247,148,29,0.5)] shadow-lg text-sm sm:text-base"
               >
                 Start Your Project
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4" aria-hidden="true" />
               </a>
               <a
                 href="#projects"
                 className="px-6 py-3 sm:py-3.5 rounded-xl glass hover:bg-white/10 text-white font-medium flex items-center justify-center gap-2 transition-all border border-white/10 hover:border-white/20 text-sm sm:text-base"
               >
-                <Play className="w-4 h-4 fill-white/20" />
+                <Play className="w-4 h-4 fill-white/20" aria-hidden="true" />
                 View Our Work
               </a>
             </div>
 
-            {/* Trust Indicators */}
-            <div className="pt-4 sm:pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 text-xs sm:text-sm text-gray-400 justify-center lg:justify-start">
-              <div className="flex -space-x-2">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="w-7 h-7 rounded-full border-2 border-primary-950 bg-zinc-800 flex items-center justify-center overflow-hidden">
-                    <img src={`https://i.pravatar.cc/100?img=${i + 10}`} alt="Client" className="w-full h-full object-cover" />
-                  </div>
-                ))}
+            {/* Trust Indicators — replaced avatars with verified stat badges */}
+            <div className="pt-4 sm:pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start flex-wrap">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" aria-hidden="true" />
+                <span className="text-xs sm:text-sm font-medium text-gray-200">Founded 2024 · Banepa, Nepal</span>
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                <span className="font-medium text-gray-300 text-center sm:text-left">50+ Projects Delivered | Trusted by Growing Businesses</span>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
+                <CheckCircle2 className="w-4 h-4 text-secondary-400 shrink-0" aria-hidden="true" />
+                <span className="text-xs sm:text-sm font-medium text-gray-200">Affordable &amp; Transparent Pricing</span>
               </div>
             </div>
           </motion.div>
@@ -105,7 +101,7 @@ export function Hero() {
                   className="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl glass-dark border border-white/10 backdrop-blur-xl"
                 >
                   <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/5 flex items-center justify-center border border-white/5 shrink-0">
-                    <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${card.color}`} />
+                    <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${card.color}`} aria-hidden="true" />
                   </div>
                   <span className="font-medium text-[11px] sm:text-xs text-gray-200 tracking-wide">{card.title}</span>
                 </motion.div>
@@ -124,29 +120,27 @@ export function Hero() {
               className="absolute w-36 h-36 rounded-full bg-gradient-to-br from-primary-900 to-black glass-dark border border-white/10 flex items-center justify-center z-20 shadow-2xl"
             >
               <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-accent-600/20 to-secondary-500/20 flex items-center justify-center blur-sm absolute inset-auto" />
-              <Code className="w-10 h-10 text-accent-400 relative z-10" />
+              <Code className="w-10 h-10 text-accent-400 relative z-10" aria-hidden="true" />
             </motion.div>
 
             {/* Orbiting Rings */}
-            <motion.div
-              animate={{ rotateX: [60, 60], rotateZ: [0, 360] }}
-              transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-              className="absolute w-[400px] h-[400px] rounded-full border border-white/5 shadow-[inset_0_0_20px_rgba(255,255,255,0.02)] z-10"
+            <div
+              style={{ transform: "rotateX(60deg)" }}
+              className="absolute w-[400px] h-[400px] rounded-full border border-white/5 shadow-[inset_0_0_20px_rgba(255,255,255,0.02)] z-10 animate-spin-slow"
             >
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full glass border border-white/10 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.1)]">
-                <PenTool className="w-4 h-4 text-secondary-400" />
+                <PenTool className="w-4 h-4 text-secondary-400" aria-hidden="true" />
               </div>
-            </motion.div>
+            </div>
             
-            <motion.div
-              animate={{ rotateX: [70, 70], rotateZ: [360, 0] }}
-              transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-              className="absolute w-[550px] h-[550px] rounded-full border border-white/5 z-0"
+            <div
+              style={{ transform: "rotateX(70deg)" }}
+              className="absolute w-[550px] h-[550px] rounded-full border border-white/5 z-0 animate-spin-reverse-slow"
             >
               <div className="absolute bottom-1/4 right-0 translate-x-1/2 w-10 h-10 rounded-full glass border border-white/10 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.1)]">
-                <BarChart3 className="w-4 h-4 text-blue-400" />
+                <BarChart3 className="w-4 h-4 text-blue-400" aria-hidden="true" />
               </div>
-            </motion.div>
+            </div>
 
             {/* Floating UI Cards */}
             {floatingCards.map((card, index) => {
@@ -165,22 +159,17 @@ export function Hero() {
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
-                  animate={{ 
-                    opacity: 1, 
-                    y: [0, -15, 0],
-                    x: [0, index % 2 === 0 ? 10 : -10, 0]
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: card.delay }}
+                  className="absolute z-30 flex items-center gap-3 p-2.5 pr-4 rounded-xl glass-dark border border-white/10 shadow-xl hover:bg-white/5 hover:border-white/20 transition-colors cursor-default backdrop-blur-xl animate-float-slow"
+                  style={{
+                    ...positions[index],
+                    animationDelay: `${index * 0.4}s`
                   }}
-                  transition={{ 
-                    opacity: { duration: 0.8, delay: card.delay },
-                    y: { duration: 4 + index, repeat: Infinity, ease: "easeInOut", delay: card.delay },
-                    x: { duration: 5 + index, repeat: Infinity, ease: "easeInOut", delay: card.delay }
-                  }}
-                  className="absolute z-30 flex items-center gap-3 p-2.5 pr-4 rounded-xl glass-dark border border-white/10 shadow-xl hover:bg-white/5 hover:border-white/20 transition-colors cursor-default backdrop-blur-xl"
-                  style={positions[index]}
                   whileHover={{ scale: 1.05 }}
                 >
                   <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center border border-white/5 shadow-inner shrink-0">
-                    <Icon className={`w-4 h-4 ${card.color}`} />
+                    <Icon className={`w-4 h-4 ${card.color}`} aria-hidden="true" />
                   </div>
                   <span className="font-medium text-xs text-gray-200 tracking-wide whitespace-nowrap">{card.title}</span>
                 </motion.div>

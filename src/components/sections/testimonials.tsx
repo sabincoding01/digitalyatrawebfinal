@@ -81,7 +81,7 @@ export function Testimonials() {
                   {testimonial.name?.charAt(0)}
                 </div>
                 <div>
-                  <h4 className="font-bold text-foreground">{testimonial.name}</h4>
+                  <h3 className="font-bold text-foreground">{testimonial.name}</h3>
                   <p className="text-sm text-foreground/60">{testimonial.role}</p>
                 </div>
               </div>

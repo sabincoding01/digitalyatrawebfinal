@@ -4,7 +4,53 @@ import { useEffect, useState } from "react";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { motion } from "framer-motion";
-import * as Icons from "lucide-react";
+import {
+  Code,
+  Smartphone,
+  Monitor,
+  Megaphone,
+  PenTool,
+  Lightbulb,
+  Globe,
+  Database,
+  Cpu,
+  Server,
+  Settings,
+  LineChart,
+  Cloud,
+  Search,
+  Share2,
+  Code2,
+  MonitorSmartphone,
+  Eye,
+  Shield,
+  Layers,
+  HelpCircle
+} from "lucide-react";
+
+const IconMap: Record<string, React.ComponentType<any>> = {
+  Code,
+  Smartphone,
+  Monitor,
+  Megaphone,
+  PenTool,
+  Lightbulb,
+  Globe,
+  Database,
+  Cpu,
+  Server,
+  Settings,
+  LineChart,
+  Cloud,
+  Search,
+  Share2,
+  Code2,
+  MonitorSmartphone,
+  Eye,
+  Shield,
+  Layers,
+  HelpCircle
+};
 
 export function Services() {
   const [services, setServices] = useState<any[]>([]);
@@ -53,7 +99,7 @@ export function Services() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map((service, index) => {
             // @ts-ignore
-            const Icon = Icons[service.icon] || Icons.Monitor;
+            const Icon = IconMap[service.icon] || IconMap.Monitor;
             return (
               <motion.div
                 key={service.id}

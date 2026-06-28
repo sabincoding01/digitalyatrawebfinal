@@ -64,7 +64,7 @@ export function Courses() {
               {course.thumbnailUrl ? (
                 <div className="h-48 relative overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <img src={course.thumbnailUrl} alt={course.title} width={600} height={400} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 </div>
               ) : (
                 <div className="h-48 bg-gradient-to-br from-primary-900 to-primary-600 relative flex justify-center items-center overflow-hidden">

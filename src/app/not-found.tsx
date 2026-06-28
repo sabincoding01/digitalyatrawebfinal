@@ -11,7 +11,6 @@ export default function NotFound() {
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-[30%] h-[30%] rounded-full bg-blue-600/10 blur-[120px]" />
         <div className="absolute bottom-1/4 right-1/4 w-[30%] h-[30%] rounded-full bg-secondary-500/10 blur-[120px]" />
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 mix-blend-overlay"></div>
       </div>
 
       <motion.div 
