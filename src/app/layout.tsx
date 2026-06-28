@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -107,10 +107,13 @@ export const metadata: Metadata = {
   category: "technology",
   classification: "IT Services",
   manifest: "/manifest.json",
-  themeColor: "#F7941D",
   verification: {
     google: "eudiXq8rVfS6W6rAAeOE6W_kV3qAfvim65T8i8Oc5WM",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#F7941D",
 };
 
 const jsonLd = {

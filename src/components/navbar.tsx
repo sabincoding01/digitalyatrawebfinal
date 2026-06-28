@@ -44,21 +44,31 @@ export function Navbar() {
     e.preventDefault();
     setIsMobileMenuOpen(false);
 
-    // If it's a plain path (e.g. "/", "/blog", "/careers"), do a normal navigation
-    if (!href.startsWith("#")) {
-      window.location.href = href;
+    // Extract hash from href (handles both "#about" and "/#about")
+    const hashIndex = href.indexOf("#");
+    const hash = hashIndex !== -1 ? href.substring(hashIndex) : null;
+
+    // If we're on the homepage and there's a hash, scroll directly
+    if (hash && isHome) {
+      const element = document.querySelector(hash);
+      if (element) {
+        const offsetTop = element.getBoundingClientRect().top + window.scrollY - 80;
+        window.scrollTo({
+          top: offsetTop,
+          behavior: "smooth",
+        });
+      }
       return;
     }
 
-    // It's a hash — scroll to the section
-    const element = document.querySelector(href);
-    if (element) {
-      const offsetTop = element.getBoundingClientRect().top + window.scrollY - 80;
-      window.scrollTo({
-        top: offsetTop,
-        behavior: "smooth",
-      });
+    // If there's a hash but we're not on the homepage, navigate to home with hash
+    if (hash && !isHome) {
+      window.location.href = `/${hash}`;
+      return;
     }
+
+    // Plain path (e.g. "/", "/blog"), do normal navigation
+    window.location.href = href;
   };
 
   return (

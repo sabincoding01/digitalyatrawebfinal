@@ -55,7 +55,7 @@ export function FloatingActions() {
       {/* Scroll Progress Bar */}
       <div className={`fixed top-0 left-0 w-full h-1 z-[60] bg-transparent transition-opacity duration-300 ${scrollProgress > 0 ? 'opacity-100' : 'opacity-0'}`}>
         <div 
-          className="h-full bg-blue-600 dark:bg-blue-500 transition-all duration-150 ease-out"
+          className="h-full bg-secondary-500 transition-all duration-150 ease-out"
           style={{ width: `${scrollProgress}%` }}
         />
       </div>
@@ -161,9 +161,9 @@ export function FloatingActions() {
           )}
           <span className="font-semibold">{isMenuOpen ? "Close" : "Connect"}</span>
           
-          {/* Subtle pulse effect when closed */}
+          {/* Subtle one-time pulse effect when closed */}
           {!isMenuOpen && (
-            <span className="absolute inset-0 rounded-full border-2 border-blue-500 opacity-50 animate-ping pointer-events-none" />
+            <span className="absolute inset-0 rounded-full border-2 border-secondary-500/40 animate-pulse pointer-events-none" />
           )}
         </button>
 
