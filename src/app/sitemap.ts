@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://digitalyatra.com";
+  const baseUrl = "https://digitalyatranepal.netlify.app";
   const now = new Date();
 
   return [

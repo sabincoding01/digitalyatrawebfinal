@@ -6,7 +6,7 @@ Disallow: /api/*
 Disallow: /_next/*
 
 # Sitemap location
-Sitemap: https://digitalyatra.com/sitemap.xml
+Sitemap: https://digitalyatranepal.netlify.app/sitemap.xml
 
 # Crawl delay to prevent overloading
 Crawl-delay: 10

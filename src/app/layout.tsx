@@ -44,11 +44,11 @@ export const metadata: Metadata = {
 
   // Canonical URL
   alternates: {
-    canonical: "https://digitalyatra.com",
+    canonical: "https://digitalyatranepal.netlify.app",
   },
 
   // Author & Publisher
-  authors: [{ name: "Digital Yatra", url: "https://digitalyatra.com" }],
+  authors: [{ name: "Digital Yatra", url: "https://digitalyatranepal.netlify.app" }],
   creator: "Digital Yatra",
   publisher: "Digital Yatra",
 
@@ -56,14 +56,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://digitalyatra.com",
+    url: "https://digitalyatranepal.netlify.app",
     siteName: "Digital Yatra",
     title: "Digital Yatra | Web Development, Software & Digital Marketing in Nepal",
     description:
       "Nepal's premier IT agency — web development, custom software, branding, digital marketing & IT training. We build digital systems that grow your business.",
     images: [
       {
-        url: "https://digitalyatra.com/og-image.png",
+        url: "https://digitalyatranepal.netlify.app/og-image.png",
         width: 1200,
         height: 630,
         alt: "Digital Yatra — Nepal's Premier IT Agency",
@@ -108,14 +108,18 @@ export const metadata: Metadata = {
   classification: "IT Services",
   manifest: "/manifest.json",
   themeColor: "#F7941D",
+  verification: {
+    google: "eudiXq8rVfS6W6rAAeOE6W_kV3qAfvim65T8i8Oc5WM",
+  },
 };
 
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "ITService",
   "name": "Digital Yatra",
-  "image": "https://digitalyatra.com/logo.png",
-  "url": "https://digitalyatra.com",
+  "image": "https://digitalyatranepal.netlify.app/logo.png",
+  "@id": "https://digitalyatranepal.netlify.app",
+  "url": "https://digitalyatranepal.netlify.app",
   "telephone": "+977-9864155993",
   "email": "digitalyatra.tech@gmail.com",
   "address": {
