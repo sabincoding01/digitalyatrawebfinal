@@ -56,9 +56,6 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  devIndicators: {
-    buildActivity: false,
-  },
   async headers() {
     return [
       {
