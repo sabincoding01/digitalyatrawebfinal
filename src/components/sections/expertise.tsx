@@ -16,7 +16,7 @@ const expertiseAreas = [
 
 export function Expertise() {
   return (
-    <section id="expertise" className="py-24 bg-background">
+    <section id="expertise" className="py-24 bg-background scroll-mt-header">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <span className="text-secondary-500 font-semibold tracking-wider uppercase text-sm">Our Technologies</span>
@@ -28,7 +28,7 @@ export function Expertise() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {expertiseAreas.map((area, index) => {
             const Icon = area.icon;
             return (

@@ -1,0 +1,140 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // PIN admin panel runs without Firebase auth; signed-in students stay restricted
+    function panelAccess() {
+      return !isSignedIn() || (isSignedIn() && userDoc().role == 'admin');
+    }
+
+    function isApprovedStudent() {
+      return isSignedIn()
+        && userDoc().role == 'student'
+        && userDoc().status == 'approved';
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // ── Public marketing content ──
+    match /services/{id} { allow read: if true; allow write: if panelAccess(); }
+    match /courses/{id} { allow read: if true; allow write: if panelAccess(); }
+    match /projects/{id} { allow read: if true; allow write: if panelAccess(); }
+    match /stats/{id} { allow read: if true; allow write: if panelAccess(); }
+    match /blogs/{id} { allow read: if true; allow write: if panelAccess(); }
+    match /careers/{id} { allow read: if true; allow write: if panelAccess(); }
+
+    match /testimonials/{id} {
+      allow read: if resource.data.status == 'approved' || panelAccess();
+      allow create: if request.resource.data.status == 'pending';
+      allow update, delete: if panelAccess();
+    }
+
+    match /contacts/{id} {
+      allow create: if true;
+      allow read, update, delete: if panelAccess();
+    }
+
+    match /subscribers/{id} {
+      allow create: if true;
+      allow read, delete: if panelAccess();
+    }
+
+    match /courseLeads/{id} {
+      allow create: if true;
+      allow read, delete: if panelAccess();
+    }
+
+    // ── User accounts ──
+    match /users/{userId} {
+      allow read: if isOwner(userId) || panelAccess();
+
+      allow create: if isOwner(userId)
+        && request.resource.data.uid == userId
+        && request.resource.data.role == 'student'
+        && request.resource.data.status == 'pending';
+
+      allow update: if panelAccess()
+        || (isOwner(userId)
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.status == resource.data.status
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['displayName', 'socialHandle', 'socialPlatform', 'photoURL']));
+
+      allow delete: if panelAccess();
+    }
+
+    // ── Student portal ──
+    match /tasks/{id} {
+      allow read: if isApprovedStudent() || panelAccess();
+      allow write: if panelAccess();
+    }
+
+    match /submissions/{id} {
+      allow read: if panelAccess()
+        || (isSignedIn() && resource.data.studentUid == request.auth.uid);
+
+      allow create: if panelAccess()
+        || (isApprovedStudent()
+          && request.resource.data.studentUid == request.auth.uid
+          && request.resource.data.status in ['submitted', 'needs_revision']);
+
+      allow update: if panelAccess()
+        || (isApprovedStudent()
+          && resource.data.studentUid == request.auth.uid
+          && (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewedByStudent'])
+            || (request.resource.data.studentUid == request.auth.uid
+                && request.resource.data.status in ['submitted', 'needs_revision'])
+          ));
+
+      allow delete: if panelAccess();
+    }
+
+    match /classSessions/{id} {
+      allow read: if isApprovedStudent() || panelAccess();
+      allow write: if panelAccess();
+    }
+
+    match /attendance/{id} {
+      allow read: if panelAccess()
+        || (isSignedIn() && resource.data.studentUid == request.auth.uid);
+
+      allow create, update: if panelAccess()
+        || (isApprovedStudent()
+          && request.resource.data.studentUid == request.auth.uid);
+
+      allow delete: if panelAccess();
+    }
+
+    match /settings/{docId} {
+      allow read: if (docId == 'liveClass' && isApprovedStudent()) || panelAccess();
+      allow write: if panelAccess();
+    }
+
+    match /announcements/{id} {
+      allow read: if isApprovedStudent() || panelAccess();
+      allow write: if panelAccess();
+    }
+
+    match /resources/{id} {
+      allow read: if isApprovedStudent() || panelAccess();
+      allow write: if panelAccess();
+    }
+
+    match /leaderboard/{id} {
+      allow read: if isApprovedStudent() || panelAccess();
+      allow write: if panelAccess();
+    }
+  }
+}

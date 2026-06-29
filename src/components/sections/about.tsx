@@ -13,9 +13,9 @@ const highlights = [
 
 export function About() {
   return (
-    <section id="about" className="py-24 bg-background relative overflow-hidden">
+    <section id="about" className="py-24 bg-background relative overflow-hidden scroll-mt-header">
       {/* Decorative background element */}
-      <div className="absolute top-0 right-0 w-1/3 h-full bg-primary-50 dark:bg-primary-950/30 transform skew-x-12 translate-x-20 -z-10" />
+      <div className="absolute top-0 right-0 w-1/3 h-full bg-primary-50 dark:bg-primary-950/30 transform skew-x-12 translate-x-8 md:translate-x-20 -z-10" />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">

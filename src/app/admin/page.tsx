@@ -11,6 +11,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import { syncLeaderboardEntry } from "@/lib/portal";
 
 const ADMIN_PIN = "5993";
 
@@ -35,6 +36,9 @@ export default function AdminPage() {
     users: [],
     tasks: [],
     submissions: [],
+    announcements: [],
+    resources: [],
+    leaderboard: [],
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -107,7 +111,8 @@ export default function AdminPage() {
     try {
       const collections = [
         "testimonials", "services", "courses", "projects", "stats", "blogs", "careers", 
-        "subscribers", "courseLeads", "contacts", "users", "tasks", "submissions", "settings", "classSessions", "attendance"
+        "subscribers", "courseLeads", "contacts", "users", "tasks", "submissions", "settings", "classSessions", "attendance",
+        "announcements", "resources", "leaderboard"
       ];
       const unsubscribes = collections.map(colName => {
         const q = query(collection(db, colName));
@@ -155,6 +160,14 @@ export default function AdminPage() {
       setPinError("Invalid PIN code");
       toast.error("Invalid PIN code");
       setPinInput("");
+    }
+  };
+
+  const refreshLeaderboard = async (studentUid: string, displayName: string) => {
+    try {
+      await syncLeaderboardEntry(studentUid, displayName);
+    } catch (err) {
+      console.error("Leaderboard sync failed:", err);
     }
   };
 
@@ -211,6 +224,9 @@ export default function AdminPage() {
         viewedByStudent: false,
       });
       toast.success(gradingStatus === "approved" ? "Task marked as completed!" : "Sent back for revision.");
+      if (gradingStatus === "approved") {
+        await refreshLeaderboard(gradingSubmission.studentUid, gradingSubmission.studentName);
+      }
       setGradingSubmission(null);
       setGradingFeedback("");
     } catch (err) {
@@ -220,16 +236,19 @@ export default function AdminPage() {
   };
 
   const handleSubmissionStatus = async (
-    subId: string,
+    sub: { id: string; studentUid: string; studentName: string },
     newStatus: "approved" | "needs_revision",
     feedback = ""
   ) => {
     try {
-      await updateDoc(doc(db, "submissions", subId), {
+      await updateDoc(doc(db, "submissions", sub.id), {
         status: newStatus,
         feedback,
         viewedByStudent: false,
       });
+      if (newStatus === "approved") {
+        await refreshLeaderboard(sub.studentUid, sub.studentName);
+      }
       toast.success(newStatus === "approved" ? "Task marked as completed!" : "Sent back for revision.");
     } catch (err) {
       console.error(err);
@@ -312,6 +331,10 @@ export default function AdminPage() {
         if (pdfUrl) payload.syllabusUrl = pdfUrl;
       }
 
+      if (activeTab === "announcements" || activeTab === "resources") {
+        payload.active = payload.active !== false;
+      }
+
       await addDoc(collection(db, activeTab), payload);
       toast.success(`${activeTab.slice(0, -1)} added successfully!`);
       setIsModalOpen(false);
@@ -328,7 +351,7 @@ export default function AdminPage() {
   // --- LOGIN SCREEN ---
   if (dbUser && dbUser.role === "student") {
     return (
-      <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center p-4">
+      <div className="min-h-[calc(100vh-var(--header-height))] bg-zinc-950 text-white flex items-center justify-center p-4 sm:p-6">
         <div className="w-full max-w-md bg-zinc-900 border border-white/10 rounded-2xl p-8 text-center space-y-4">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto animate-pulse" />
           <h1 className="text-xl font-bold">Unauthorized Access</h1>
@@ -342,7 +365,7 @@ export default function AdminPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center p-4">
+      <div className="min-h-[calc(100vh-var(--header-height))] bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center p-4 sm:p-6">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -401,6 +424,8 @@ export default function AdminPage() {
     { id: "users", label: "🎓 Portal: Students" },
     { id: "tasks", label: "📋 Portal: Tasks" },
     { id: "submissions", label: "📝 Portal: Submissions" },
+    { id: "announcements", label: "📢 Portal: Announcements" },
+    { id: "resources", label: "📚 Portal: Resources" },
     { id: "classSessions", label: "🗓️ Portal: Live Classes" },
     { id: "settings", label: "⚙️ Settings" },
   ];
@@ -409,7 +434,7 @@ export default function AdminPage() {
   const newContactCount = data.contacts?.filter((c: any) => c.status === "new").length || 0;
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 pt-24 pb-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-[calc(100vh-var(--header-height))] bg-zinc-50 dark:bg-zinc-950 py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-6">
 
         {/* Header */}
@@ -434,15 +459,15 @@ export default function AdminPage() {
         </div>
 
         {error && (
-          <div className="p-4 bg-red-50 text-red-600 rounded-xl flex items-start gap-3">
+          <div className="p-4 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 rounded-xl flex items-start gap-3">
             <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
             <p>{error}</p>
           </div>
         )}
 
         {/* Tabs - horizontally scrollable on mobile */}
-        <div className="w-full max-w-full">
-          <div className="flex gap-2 pb-2 overflow-x-auto hide-scrollbar border-b border-zinc-200 dark:border-zinc-800">
+        <div className="relative w-full max-w-full">
+          <div className="flex gap-2 pb-2 overflow-x-auto hide-scrollbar border-b border-zinc-200 dark:border-zinc-800 scroll-pl-4">
           {tabs.map(tab => (
             <button
               key={tab.id}
@@ -683,6 +708,11 @@ export default function AdminPage() {
                             {student.displayName}
                           </h3>
                           <p className="text-sm text-zinc-500 dark:text-zinc-400">{student.email}</p>
+                          {(student.socialHandle) && (
+                            <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+                              {student.socialPlatform || "social"}: @{student.socialHandle.replace(/^@/, "")}
+                            </p>
+                          )}
                           <p className="text-xs text-zinc-400 mt-1">Joined: {student.createdAt ? new Date(student.createdAt.toDate()).toLocaleDateString() : "Pending"}</p>
                           {student.status === "approved" && (() => {
                             const studentJoinDate = student.createdAt?.toMillis ? student.createdAt.toMillis() : 0;
@@ -782,6 +812,9 @@ export default function AdminPage() {
 
                   return filteredSubmissions.map((sub: any) => {
                     const associatedTask = (data.tasks || []).find((t: any) => t.id === sub.taskId);
+                    const studentUser = (data.users || []).find((u: any) => u.uid === sub.studentUid);
+                    const socialHandle = sub.socialHandle || studentUser?.socialHandle;
+                    const socialPlatform = sub.socialPlatform || studentUser?.socialPlatform;
                     
                     return (
                       <div key={sub.id} className="p-5 hover:bg-zinc-50 dark:hover:bg-zinc-800/10 transition-colors flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -806,6 +839,12 @@ export default function AdminPage() {
                               <span className="font-semibold text-zinc-500 dark:text-zinc-400">Did you finish your task? — </span>
                               {sub.answer || sub.note || sub.link || "No response provided"}
                             </div>
+                            {(sub.socialHandle || socialHandle) && (
+                              <div className="text-xs text-blue-600 dark:text-blue-400">
+                                Social: @{String(socialHandle).replace(/^@/, "")}
+                                {socialPlatform && ` (${socialPlatform})`}
+                              </div>
+                            )}
                             {sub.feedback && (
                               <div className="text-xs text-amber-600 dark:text-amber-400 mt-1 border-t border-zinc-100 dark:border-zinc-800 pt-1">
                                 <span className="font-semibold">Instructor Feedback: </span>
@@ -834,7 +873,7 @@ export default function AdminPage() {
                           <div className="flex flex-wrap gap-2 justify-end">
                             {sub.status !== "approved" && (
                               <button
-                                onClick={() => handleSubmissionStatus(sub.id, "approved")}
+                                onClick={() => handleSubmissionStatus(sub, "approved")}
                                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm cursor-pointer"
                               >
                                 Approve
@@ -842,7 +881,7 @@ export default function AdminPage() {
                             )}
                             {sub.status !== "needs_revision" && sub.status !== "approved" && (
                               <button
-                                onClick={() => handleSubmissionStatus(sub.id, "needs_revision")}
+                                onClick={() => handleSubmissionStatus(sub, "needs_revision")}
                                 className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm cursor-pointer"
                               >
                                 Needs Revision
@@ -871,6 +910,70 @@ export default function AdminPage() {
                     );
                   });
                 })()}
+              </div>
+            </div>
+          )}
+
+          {/* ===== ANNOUNCEMENTS TAB ===== */}
+          {activeTab === "announcements" && (
+            <div className="p-6 space-y-6 animate-fade-in">
+              <div className="divide-y divide-zinc-100 dark:divide-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden bg-white dark:bg-zinc-900">
+                {(!data.announcements || data.announcements.length === 0) ? (
+                  <div className="px-6 py-12 text-center text-zinc-500">No announcements yet. Click &quot;Add New Entry&quot; to create one.</div>
+                ) : (
+                  data.announcements.map((item: any) => (
+                    <div key={item.id} className="p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/10">
+                      <div className="space-y-1 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-zinc-950 dark:text-white">{item.title}</h3>
+                          <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full uppercase ${item.active !== false ? "bg-emerald-100 text-emerald-700" : "bg-zinc-100 text-zinc-500"}`}>
+                            {item.active !== false ? "Active" : "Hidden"}
+                          </span>
+                        </div>
+                        <p className="text-sm text-zinc-600 dark:text-zinc-300 whitespace-pre-line">{item.message}</p>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          onClick={() => updateDoc(doc(db, "announcements", item.id), { active: item.active === false })}
+                          className="px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-xs font-medium rounded-lg"
+                        >
+                          {item.active !== false ? "Hide" : "Show"}
+                        </button>
+                        <button onClick={() => handleDelete("announcements", item.id)} className="p-2 text-zinc-400 hover:text-red-600 rounded-lg">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ===== RESOURCES TAB ===== */}
+          {activeTab === "resources" && (
+            <div className="p-6 space-y-6 animate-fade-in">
+              <div className="divide-y divide-zinc-100 dark:divide-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden bg-white dark:bg-zinc-900">
+                {(!data.resources || data.resources.length === 0) ? (
+                  <div className="px-6 py-12 text-center text-zinc-500">No resources yet. Click &quot;Add New Entry&quot; to add study links or PDFs.</div>
+                ) : (
+                  data.resources.map((item: any) => (
+                    <div key={item.id} className="p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/10">
+                      <div className="space-y-1 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-zinc-950 dark:text-white">{item.title}</h3>
+                          <span className="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase bg-blue-100 text-blue-700">{item.type || "link"}</span>
+                        </div>
+                        <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline inline-flex items-center gap-1">
+                          {item.url} <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                      <button onClick={() => handleDelete("resources", item.id)} className="p-2 text-zinc-400 hover:text-red-600 rounded-lg shrink-0">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           )}
@@ -952,7 +1055,7 @@ export default function AdminPage() {
           )}
 
           {/* ===== ALL OTHER TABS (table view) ===== */}
-          {!["contacts", "stats", "users", "submissions", "settings", "classSessions"].includes(activeTab) && (
+          {!["contacts", "stats", "users", "submissions", "settings", "classSessions", "announcements", "resources"].includes(activeTab) && (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -1074,7 +1177,7 @@ export default function AdminPage() {
                 <form id="add-form" onSubmit={handleSubmit} className="space-y-4">
 
                   {/* Common Title */}
-                  {["courses", "projects", "services", "blogs", "careers", "tasks"].includes(activeTab) && (
+                  {["courses", "projects", "services", "blogs", "careers", "tasks", "announcements", "resources"].includes(activeTab) && (
                     <div className="space-y-1.5">
                       <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Title</label>
                       <input type="text" required value={formData.title || ""} onChange={e => setFormData({ ...formData, title: e.target.value })}
@@ -1083,7 +1186,7 @@ export default function AdminPage() {
                   )}
 
                   {/* Common Description */}
-                  {["courses", "projects", "services", "tasks"].includes(activeTab) && (
+                  {["courses", "projects", "services", "tasks", "announcements"].includes(activeTab) && (
                     <div className="space-y-1.5">
                       <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Description</label>
                       <textarea required rows={3} value={formData.description || ""} onChange={e => setFormData({ ...formData, description: e.target.value })}
@@ -1164,6 +1267,37 @@ export default function AdminPage() {
                             </div>
                           </div>
                         )}
+                      </div>
+                    </>
+                  )}
+
+                  {/* ===== PORTAL ANNOUNCEMENTS ===== */}
+                  {activeTab === "announcements" && (
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Message</label>
+                      <textarea required rows={4} value={formData.message || ""} onChange={e => setFormData({ ...formData, message: e.target.value })}
+                        className="w-full px-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white resize-none text-sm"
+                        placeholder="Class is cancelled tomorrow / New task posted..." />
+                    </div>
+                  )}
+
+                  {/* ===== PORTAL RESOURCES ===== */}
+                  {activeTab === "resources" && (
+                    <>
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Resource URL</label>
+                        <input type="url" required value={formData.url || ""} onChange={e => setFormData({ ...formData, url: e.target.value })}
+                          placeholder="https://drive.google.com/... or PDF link"
+                          className="w-full px-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white text-sm" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Type</label>
+                        <select value={formData.type || "link"} onChange={e => setFormData({ ...formData, type: e.target.value })}
+                          className="w-full px-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white text-sm">
+                          <option value="link">Link</option>
+                          <option value="pdf">PDF</option>
+                          <option value="video">Video</option>
+                        </select>
                       </div>
                     </>
                   )}

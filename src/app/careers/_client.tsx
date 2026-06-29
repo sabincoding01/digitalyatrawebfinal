@@ -28,15 +28,15 @@ export default function CareersClient() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-zinc-50 dark:bg-zinc-950 pt-32 pb-24">
-      <div className="relative py-20 px-4 overflow-hidden border-b border-zinc-200 dark:border-zinc-800">
+    <main className="min-h-screen bg-zinc-50 dark:bg-zinc-950 pt-24 pb-24">
+      <div className="relative py-16 sm:py-20 px-4 overflow-hidden border-b border-zinc-200 dark:border-zinc-800">
         <div className="absolute inset-0 bg-blue-600/5 dark:bg-blue-600/10" />
         <div className="absolute right-0 top-0 w-1/2 h-full bg-gradient-to-l from-blue-600/10 to-transparent" />
         <div className="container mx-auto max-w-4xl relative z-10 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-medium text-sm mb-6">
             <Sparkles className="w-4 h-4" /> We are hiring
           </div>
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-zinc-900 dark:text-white mb-6">
+          <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold tracking-tight text-zinc-900 dark:text-white mb-4 sm:mb-6">
             Join the team at{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
               Digital Yatra
@@ -59,7 +59,7 @@ export default function CareersClient() {
             <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : error ? (
-          <div className="p-4 bg-red-50 text-red-600 rounded-xl text-center">{error}</div>
+          <div className="p-4 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 rounded-xl text-center">{error}</div>
         ) : jobs.length === 0 ? (
           <div className="text-center py-20 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800">
             <Briefcase className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mx-auto mb-4" />

@@ -32,7 +32,7 @@ const steps = [
 
 export function Process() {
   return (
-    <section id="process" className="py-24 bg-background relative overflow-hidden">
+    <section id="process" className="py-24 bg-background relative overflow-hidden scroll-mt-header">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <span className="text-secondary-500 font-semibold tracking-wider uppercase text-sm">How We Work</span>

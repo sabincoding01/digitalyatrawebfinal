@@ -74,7 +74,7 @@ export function FloatingActions() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={scrollToTop}
-            className="fixed bottom-[150px] right-6 z-[60] w-12 h-12 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-full flex items-center justify-center shadow-lg hover:bg-white dark:hover:bg-zinc-800 transition-all hover:scale-110"
+            className="fixed bottom-24 sm:bottom-[150px] right-4 sm:right-6 z-[60] w-11 h-11 sm:w-12 sm:h-12 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-full flex items-center justify-center shadow-lg hover:bg-white dark:hover:bg-zinc-800 transition-all hover:scale-110"
             aria-label="Back to Top"
           >
             <ArrowUp className="w-5 h-5" />
@@ -83,7 +83,7 @@ export function FloatingActions() {
       </AnimatePresence>
 
       {/* Grouped Floating Action Button (Support & Connect) */}
-      <div className="fixed bottom-6 right-6 z-[60] flex flex-col items-end gap-3">
+      <div className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-[60] flex flex-col items-end gap-3 max-w-[calc(100vw-2rem)]">
         
         {/* Expanded Options Menu */}
         <AnimatePresence>
@@ -151,7 +151,7 @@ export function FloatingActions() {
         {/* Main Toggle Button */}
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className={`relative flex items-center gap-3 px-5 py-3 rounded-full shadow-2xl backdrop-blur-lg border border-white/20 transition-all duration-300 hover:scale-105 ${
+          className={`relative flex items-center gap-2 sm:gap-3 px-4 sm:px-5 py-2.5 sm:py-3 rounded-full shadow-2xl backdrop-blur-lg border border-white/20 transition-all duration-300 hover:scale-105 ${
             isMenuOpen 
               ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900" 
               : isDarkLogoColor
@@ -165,7 +165,7 @@ export function FloatingActions() {
           ) : (
             <HelpCircle className="w-5 h-5" />
           )}
-          <span className="font-semibold">{isMenuOpen ? "Close" : "Connect"}</span>
+          <span className="font-semibold text-sm sm:text-base">{isMenuOpen ? "Close" : "Connect"}</span>
           
           {/* Subtle one-time pulse effect when closed */}
           {!isMenuOpen && (

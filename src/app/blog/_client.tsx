@@ -29,12 +29,12 @@ export default function BlogClient() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-zinc-50 dark:bg-zinc-950 pt-32 pb-24">
-      <div className="container mx-auto px-4 max-w-7xl mb-16 text-center">
+    <main className="min-h-screen bg-zinc-50 dark:bg-zinc-950 pt-24 pb-24">
+      <div className="container mx-auto px-4 sm:px-6 max-w-7xl mb-12 sm:mb-16 text-center">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-medium text-sm mb-6">
           <BookOpen className="w-4 h-4" /> Insights &amp; News
         </div>
-        <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-zinc-900 dark:text-white mb-6">
+        <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight text-zinc-900 dark:text-white mb-4 sm:mb-6">
           Digital Yatra Blog
         </h1>
         <p className="text-xl text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto">
@@ -48,7 +48,7 @@ export default function BlogClient() {
             <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : error ? (
-          <div className="p-4 bg-red-50 text-red-600 rounded-xl text-center">{error}</div>
+          <div className="p-4 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 rounded-xl text-center">{error}</div>
         ) : posts.length === 0 ? (
           <div className="text-center py-20 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800">
             <BookOpen className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mx-auto mb-4" />

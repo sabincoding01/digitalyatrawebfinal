@@ -27,6 +27,7 @@
 :root {
   --background: #ffffff;
   --foreground: #04121e;
+  --header-height: 5rem;
 }
 
 /* For next-themes dark mode */
@@ -41,6 +42,39 @@ body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
   overflow-x: hidden;
   scroll-behavior: smooth;
+}
+
+/* Shared layout helpers */
+.page-below-header {
+  padding-top: var(--header-height);
+}
+
+.scroll-mt-header {
+  scroll-margin-top: var(--header-height);
+}
+
+.portal-page {
+  min-height: calc(100vh - var(--header-height));
+  background: linear-gradient(to bottom, #f4f4f5, #ffffff);
+  color: #18181b;
+}
+
+.dark .portal-page {
+  background: linear-gradient(to bottom, #04121e, #030914, #000000);
+  color: #ffffff;
+}
+
+.portal-card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(24, 24, 27, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(12px);
+}
+
+.dark .portal-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: none;
 }
 
 /* Glassmorphism Utilities */
@@ -71,6 +105,14 @@ body {
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
+  background: #f7941d;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #1e4976;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
   background: #f7941d;
 }
 

@@ -2,12 +2,12 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { useState } from "react";
-import { LogIn, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
 
 export default function StudentLoginPage() {
-  const { loginWithGoogle, user, dbUser, loading } = useAuth();
+  const { loginWithGoogle, loading } = useAuth();
   const [signingIn, setSigningIn] = useState(false);
 
   const handleGoogleLogin = async () => {
@@ -24,49 +24,37 @@ export default function StudentLoginPage() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center bg-gradient-to-b from-primary-950 via-[#030914] to-black text-white p-4">
-      {/* Background glow */}
+    <div className="portal-page flex items-center justify-center p-4 sm:p-6 py-8">
       <div className="absolute top-1/4 left-1/4 w-[30%] h-[30%] rounded-full bg-blue-600/10 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-[30%] h-[30%] rounded-full bg-secondary-500/10 blur-[120px] pointer-events-none" />
 
-      <div className="w-full max-w-md bg-zinc-950/60 backdrop-blur-xl rounded-2xl border border-white/10 p-8 shadow-2xl relative z-10 text-center space-y-8">
-        
-        {/* Brand logo & title */}
+      <div className="w-full max-w-md portal-card rounded-2xl p-6 sm:p-8 shadow-2xl relative z-10 text-center space-y-8">
         <div className="flex flex-col items-center space-y-4">
-          <div className="relative w-16 h-16 bg-primary-900/50 rounded-xl p-2 border border-white/10 flex items-center justify-center">
-            <Image 
-              src="/logo.png" 
-              alt="Digital Yatra Logo" 
-              width={64} 
-              height={64} 
-              className="object-contain"
-              priority
-            />
+          <div className="relative w-16 h-16 bg-primary-100 dark:bg-primary-900/50 rounded-xl p-2 border border-zinc-200 dark:border-white/10 flex items-center justify-center">
+            <Image src="/logo.png" alt="Digital Yatra Logo" width={64} height={64} className="object-contain" priority />
           </div>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white">Student Portal</h1>
-            <p className="text-gray-400 text-sm mt-1">Access tasks, submit work, and view grades</p>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Student Portal</h1>
+            <p className="text-zinc-500 dark:text-gray-400 text-sm mt-1">Access tasks, live classes, and track your progress</p>
           </div>
         </div>
 
-        {/* Feature Highlights */}
-        <div className="bg-white/5 border border-white/5 rounded-xl p-4 text-left space-y-3 text-sm">
-          <div className="flex items-center gap-3 text-gray-300">
-            <span className="w-1.5 h-1.5 rounded-full bg-secondary-500"></span>
-            <span>View assigned tasks and specifications</span>
+        <div className="portal-card rounded-xl p-4 text-left space-y-3 text-sm">
+          <div className="flex items-center gap-3 text-zinc-600 dark:text-gray-300">
+            <span className="w-1.5 h-1.5 rounded-full bg-secondary-500 shrink-0"></span>
+            <span>View assigned tasks and deadlines</span>
           </div>
-          <div className="flex items-center gap-3 text-gray-300">
-            <span className="w-1.5 h-1.5 rounded-full bg-secondary-500"></span>
-            <span>Submit project URLs (GitHub, Figma, Drive)</span>
+          <div className="flex items-center gap-3 text-zinc-600 dark:text-gray-300">
+            <span className="w-1.5 h-1.5 rounded-full bg-secondary-500 shrink-0"></span>
+            <span>Submit task completion answers for review</span>
           </div>
-          <div className="flex items-center gap-3 text-gray-300">
-            <span className="w-1.5 h-1.5 rounded-full bg-secondary-500"></span>
-            <span>Get direct feedback from course instructors</span>
+          <div className="flex items-center gap-3 text-zinc-600 dark:text-gray-300">
+            <span className="w-1.5 h-1.5 rounded-full bg-secondary-500 shrink-0"></span>
+            <span>Join live classes and track attendance</span>
           </div>
         </div>
 
-        {/* Login Action Button */}
-        <div className="space-y-4 pt-4">
+        <div className="space-y-4 pt-2">
           <button
             onClick={handleGoogleLogin}
             disabled={signingIn || loading}
@@ -84,12 +72,11 @@ export default function StudentLoginPage() {
             )}
             <span>Sign in with Google</span>
           </button>
-          
-          <p className="text-[11px] text-gray-500">
-            By signing in, you agree to our Terms of Service and Privacy Policy. New accounts are subjected to administrator approval.
+
+          <p className="text-[11px] text-zinc-500 dark:text-gray-500">
+            By signing in, you agree to our Terms of Service and Privacy Policy. New accounts require administrator approval.
           </p>
         </div>
-
       </div>
     </div>
   );

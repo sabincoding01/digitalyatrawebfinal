@@ -15,7 +15,7 @@ export function Hero() {
   ];
 
   return (
-    <section id="home" className="relative min-h-screen flex items-center pt-24 pb-12 overflow-hidden bg-gradient-to-b from-primary-950 via-[#030914] to-black text-white">
+    <section id="home" className="relative min-h-screen flex items-center pt-24 pb-12 overflow-hidden scroll-mt-header bg-gradient-to-b from-primary-950 via-[#030914] to-black text-white">
       {/* Abstract Glowing Background Elements */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-600/10 blur-[150px]" />
@@ -38,10 +38,10 @@ export function Hero() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2, duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-white/10 text-xs font-medium text-accent-400 shadow-[0_0_15px_rgba(0,229,255,0.15)]"
+              className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full glass border border-white/10 text-[10px] sm:text-xs font-medium text-accent-400 shadow-[0_0_15px_rgba(0,229,255,0.15)] max-w-full text-center leading-snug"
             >
-              <Fingerprint className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Nepal-Based IT Agency · Fast Turnaround · Transparent Pricing</span>
+              <Fingerprint className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+              <span>Nepal IT Agency · Fast Delivery · Clear Pricing</span>
             </motion.div>
             
             <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold leading-[1.15] tracking-tight text-white">

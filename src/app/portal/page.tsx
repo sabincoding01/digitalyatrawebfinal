@@ -2,103 +2,134 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
-import { collection, query, getDocs, onSnapshot, setDoc, doc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { collection, query, onSnapshot, setDoc, doc, serverTimestamp, updateDoc, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { 
   LogOut, CheckCircle2, Clock, X, ExternalLink, Calendar, 
-  Send, AlertCircle, Award, Trophy, Bell, BookOpen, LinkIcon 
+  Send, Award, Trophy, Bell, BookOpen, LinkIcon, Megaphone, FileText, User, Save
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
 export default function StudentDashboard() {
-  const { user, dbUser, logout, loading: authLoading } = useAuth();
+  const { user, dbUser, logout, updateProfile, loading: authLoading } = useAuth();
   
   const [tasks, setTasks] = useState<any[]>([]);
   const [mySubmissions, setMySubmissions] = useState<any[]>([]);
-  const [allApprovedSubmissions, setAllApprovedSubmissions] = useState<any[]>([]);
-  const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [resources, setResources] = useState<any[]>([]);
   
   const [loading, setLoading] = useState(true);
   
-  // Submit modal state
   const [activeTask, setActiveTask] = useState<any | null>(null);
   const [submittingWork, setSubmittingWork] = useState(false);
   const [taskAnswer, setTaskAnswer] = useState("");
 
-  // Live Class state
   const [classSessions, setClassSessions] = useState<any[]>([]);
   const [myAttendance, setMyAttendance] = useState<any[]>([]);
   const [meetLink, setMeetLink] = useState("");
 
+  const [socialHandle, setSocialHandle] = useState("");
+  const [socialPlatform, setSocialPlatform] = useState("instagram");
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  useEffect(() => {
+    if (dbUser) {
+      setSocialHandle(dbUser.socialHandle || "");
+      setSocialPlatform(dbUser.socialPlatform || "instagram");
+    }
+  }, [dbUser]);
+
   useEffect(() => {
     if (!user) return;
 
-    // 1. Fetch tasks
-    const tasksQuery = query(collection(db, "tasks"));
-    const unsubscribeTasks = onSnapshot(tasksQuery, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      // Sort tasks by deadline
+    let loadedCount = 0;
+    const markLoaded = () => {
+      loadedCount += 1;
+      if (loadedCount >= 7) setLoading(false);
+    };
+
+    const unsubscribeTasks = onSnapshot(query(collection(db, "tasks")), (snapshot) => {
+      const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       data.sort((a: any, b: any) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
       setTasks(data);
+      markLoaded();
     });
 
-    // 2. Fetch my submissions
-    const submissionsQuery = query(collection(db, "submissions"));
-    const unsubscribeSubmissions = onSnapshot(submissionsQuery, (snapshot) => {
-      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      
-      // Filter my submissions
-      const mine = docs.filter((s: any) => s.studentUid === user.uid);
-      setMySubmissions(mine);
+    const unsubscribeSubmissions = onSnapshot(
+      query(collection(db, "submissions"), where("studentUid", "==", user.uid)),
+      (snapshot) => {
+        setMySubmissions(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+        markLoaded();
+      }
+    );
 
-      // Filter all approved submissions for leaderboard calculation
-      const approvedOnly = docs.filter((s: any) => s.status === "approved");
-      setAllApprovedSubmissions(approvedOnly);
-      
-      setLoading(false);
+    const unsubscribeLeaderboard = onSnapshot(query(collection(db, "leaderboard")), (snapshot) => {
+      const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      data.sort((a: any, b: any) => (b.completions || 0) - (a.completions || 0));
+      setLeaderboard(data.slice(0, 5));
+      markLoaded();
     });
 
-    // 3. Fetch users for leaderboard names lookup
-    const usersQuery = query(collection(db, "users"));
-    const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setAllUsers(data);
-    });
+    const unsubscribeAnnouncements = onSnapshot(
+      query(collection(db, "announcements"), where("active", "==", true)),
+      (snapshot) => {
+        const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        data.sort((a: any, b: any) => {
+          const aTime = a.createdAt?.toMillis?.() || 0;
+          const bTime = b.createdAt?.toMillis?.() || 0;
+          return bTime - aTime;
+        });
+        setAnnouncements(data);
+        markLoaded();
+      }
+    );
 
-    // 4. Fetch class sessions
-    const sessionsQuery = query(collection(db, "classSessions"));
-    const unsubscribeSessions = onSnapshot(sessionsQuery, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      // Sort by earliest upcoming
+    const unsubscribeResources = onSnapshot(
+      query(collection(db, "resources"), where("active", "==", true)),
+      (snapshot) => {
+        const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        data.sort((a: any, b: any) => {
+          const aTime = a.createdAt?.toMillis?.() || 0;
+          const bTime = b.createdAt?.toMillis?.() || 0;
+          return bTime - aTime;
+        });
+        setResources(data);
+        markLoaded();
+      }
+    );
+
+    const unsubscribeSessions = onSnapshot(query(collection(db, "classSessions")), (snapshot) => {
+      const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       data.sort((a: any, b: any) => {
         const timeA = new Date(`${a.date}T${a.startTime}`).getTime();
         const timeB = new Date(`${b.date}T${b.startTime}`).getTime();
         return timeA - timeB;
       });
       setClassSessions(data);
+      markLoaded();
     });
 
-    // 5. Fetch my attendance
-    const attendanceQuery = query(collection(db, "attendance"));
-    const unsubscribeAttendance = onSnapshot(attendanceQuery, (snapshot) => {
-      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setMyAttendance(docs.filter((a: any) => a.studentUid === user.uid));
-    });
-
-    // 6. Fetch liveClass settings
-    const settingsQuery = query(collection(db, "settings"));
-    const unsubscribeSettings = onSnapshot(settingsQuery, (snapshot) => {
-      const liveClassDoc = snapshot.docs.find(d => d.id === "liveClass");
-      if (liveClassDoc) {
-        setMeetLink(liveClassDoc.data().meetLink || "");
+    const unsubscribeAttendance = onSnapshot(
+      query(collection(db, "attendance"), where("studentUid", "==", user.uid)),
+      (snapshot) => {
+        setMyAttendance(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+        markLoaded();
       }
+    );
+
+    const unsubscribeSettings = onSnapshot(doc(db, "settings", "liveClass"), (docSnap) => {
+      setMeetLink(docSnap.exists() ? docSnap.data().meetLink || "" : "");
+      markLoaded();
     });
 
     return () => {
       unsubscribeTasks();
       unsubscribeSubmissions();
-      unsubscribeUsers();
+      unsubscribeLeaderboard();
+      unsubscribeAnnouncements();
+      unsubscribeResources();
       unsubscribeSessions();
       unsubscribeAttendance();
       unsubscribeSettings();
@@ -107,7 +138,7 @@ export default function StudentDashboard() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-primary-950 via-[#030914] to-black text-white">
+      <div className="min-h-[60vh] flex items-center justify-center portal-page">
         <Loader2 className="w-8 h-8 animate-spin text-secondary-500" />
       </div>
     );
@@ -131,6 +162,8 @@ export default function StudentDashboard() {
         studentUid: user.uid,
         studentName: dbUser.displayName,
         studentEmail: dbUser.email,
+        socialHandle: dbUser.socialHandle || "",
+        socialPlatform: dbUser.socialPlatform || "",
         answer: taskAnswer.trim(),
         status: "submitted",
         feedback: "",
@@ -189,26 +222,23 @@ export default function StudentDashboard() {
     window.open(meetLink, "_blank");
   };
 
-  // Leaderboard Calculation
-  const completionsPerStudent = allApprovedSubmissions.reduce((acc: any, sub: any) => {
-    acc[sub.studentUid] = (acc[sub.studentUid] || 0) + 1;
-    return acc;
-  }, {});
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingProfile(true);
+    try {
+      await updateProfile({
+        displayName: dbUser?.displayName || "",
+        socialHandle: socialHandle.trim(),
+        socialPlatform,
+      });
+      toast.success("Profile updated!");
+    } catch {
+      toast.error("Failed to update profile.");
+    } finally {
+      setSavingProfile(false);
+    }
+  };
 
-  const leaderboard = Object.keys(completionsPerStudent)
-    .map(uid => {
-      const student = allUsers.find(u => u.uid === uid);
-      return {
-        uid,
-        name: student?.displayName || "Student",
-        email: student?.email || "",
-        completions: completionsPerStudent[uid],
-      };
-    })
-    .sort((a, b) => b.completions - a.completions)
-    .slice(0, 5); // top 5
-
-  // Stats
   const totalTasksCount = tasks.length;
   const completedTasksCount = mySubmissions.filter(s => s.status === "approved").length;
   const pendingTasksCount = totalTasksCount - completedTasksCount;
@@ -226,7 +256,7 @@ export default function StudentDashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary-950 via-[#030914] to-black text-white pt-32 pb-12 px-4 sm:px-6 lg:px-8">
+    <div className="portal-page pb-12 px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
       {/* Background glow */}
       <div className="absolute top-0 right-0 w-[40%] h-[40%] rounded-full bg-blue-600/5 blur-[150px] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[40%] h-[40%] rounded-full bg-secondary-500/5 blur-[150px] pointer-events-none" />
@@ -234,19 +264,19 @@ export default function StudentDashboard() {
       <div className="max-w-7xl mx-auto space-y-8 relative z-10">
         
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 portal-card rounded-2xl p-6 backdrop-blur-md">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-full bg-gradient-to-br from-secondary-400 to-orange-600 text-white flex items-center justify-center font-bold text-xl">
               {dbUser?.displayName?.charAt(0)}
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-white">Welcome back, {dbUser?.displayName}!</h1>
-              <p className="text-gray-400 text-sm">{dbUser?.email} • Student Account</p>
+              <h1 className="text-xl sm:text-2xl font-bold">Welcome back, {dbUser?.displayName}!</h1>
+              <p className="text-zinc-500 dark:text-gray-400 text-sm">{dbUser?.email} • Student Account</p>
             </div>
           </div>
           <button
             onClick={logout}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-300 hover:text-white bg-zinc-900 border border-white/10 rounded-xl hover:bg-zinc-800 transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-600 dark:text-gray-300 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
             <span>Sign Out</span>
@@ -266,9 +296,68 @@ export default function StudentDashboard() {
           </div>
         )}
 
+        {/* Announcements */}
+        {announcements.length > 0 && (
+          <div className="space-y-3">
+            {announcements.map((item) => (
+              <div key={item.id} className="bg-blue-600/10 border border-blue-500/20 px-6 py-4 rounded-2xl flex items-start gap-3">
+                <Megaphone className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-bold text-white text-sm">{item.title}</h4>
+                  <p className="text-xs text-gray-300 mt-1 whitespace-pre-line">{item.message}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Profile / Social handle for admin review */}
+        <div className="portal-card rounded-2xl p-6 backdrop-blur-md">
+          <h2 className="text-sm font-bold text-white flex items-center gap-2 mb-4">
+            <User className="w-4 h-4 text-secondary-500" /> Your Profile
+          </h2>
+          <form onSubmit={handleSaveProfile} className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+            <div className="space-y-1.5">
+              <label className="text-xs text-gray-400">Social Platform</label>
+              <select
+                value={socialPlatform}
+                onChange={(e) => setSocialPlatform(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-secondary-500"
+              >
+                <option value="instagram">Instagram</option>
+                <option value="tiktok">TikTok</option>
+                <option value="facebook">Facebook</option>
+                <option value="linkedin">LinkedIn</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div className="space-y-1.5 sm:col-span-2">
+              <label className="text-xs text-gray-400">Social Media Username (for task verification)</label>
+              <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
+                <input
+                  type="text"
+                  value={socialHandle}
+                  onChange={(e) => setSocialHandle(e.target.value)}
+                  placeholder="@yourusername"
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white text-sm outline-none focus:border-secondary-500"
+                />
+                <button
+                  type="submit"
+                  disabled={savingProfile}
+                  className="w-full sm:w-auto px-4 py-2.5 bg-secondary-500 hover:bg-secondary-600 text-white text-sm font-medium rounded-xl flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                >
+                  <Save className="w-4 h-4" />
+                  Save
+                </button>
+              </div>
+              <p className="text-[10px] text-gray-500">Admin uses this to verify your task posts on social media.</p>
+            </div>
+          </form>
+        </div>
+
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white/5 border border-white/10 p-6 rounded-2xl backdrop-blur-md flex items-center gap-4">
+          <div className="portal-card p-6 rounded-2xl backdrop-blur-md flex items-center gap-4">
             <div className="w-12 h-12 bg-blue-500/10 rounded-xl border border-blue-500/20 flex items-center justify-center text-blue-400">
               <BookOpen className="w-6 h-6" />
             </div>
@@ -278,7 +367,7 @@ export default function StudentDashboard() {
             </div>
           </div>
 
-          <div className="bg-white/5 border border-white/10 p-6 rounded-2xl backdrop-blur-md flex items-center gap-4">
+          <div className="portal-card p-6 rounded-2xl backdrop-blur-md flex items-center gap-4">
             <div className="w-12 h-12 bg-emerald-500/10 rounded-xl border border-emerald-500/20 flex items-center justify-center text-emerald-400">
               <CheckCircle2 className="w-6 h-6" />
             </div>
@@ -288,7 +377,7 @@ export default function StudentDashboard() {
             </div>
           </div>
 
-          <div className="bg-white/5 border border-white/10 p-6 rounded-2xl backdrop-blur-md flex items-center gap-4">
+          <div className="portal-card p-6 rounded-2xl backdrop-blur-md flex items-center gap-4">
             <div className="w-12 h-12 bg-amber-500/10 rounded-xl border border-amber-500/20 flex items-center justify-center text-amber-400">
               <Clock className="w-6 h-6" />
             </div>
@@ -298,7 +387,7 @@ export default function StudentDashboard() {
             </div>
           </div>
 
-          <div className="bg-white/5 border border-white/10 p-6 rounded-2xl backdrop-blur-md flex items-center gap-4">
+          <div className="portal-card p-6 rounded-2xl backdrop-blur-md flex items-center gap-4">
             <div className="w-12 h-12 bg-purple-500/10 rounded-xl border border-purple-500/20 flex items-center justify-center text-purple-400">
               <Award className="w-6 h-6" />
             </div>
@@ -431,7 +520,7 @@ export default function StudentDashboard() {
                                 setActiveTask(task);
                                 setTaskAnswer(submission?.answer || submission?.note || "");
                               }}
-                              className="px-5 py-2.5 bg-secondary-500 hover:bg-secondary-600 text-white text-sm font-semibold rounded-xl flex items-center gap-2 transition-all cursor-pointer shadow-md"
+                              className="w-full sm:w-auto px-5 py-2.5 bg-secondary-500 hover:bg-secondary-600 text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
                             >
                               <Send className="w-4 h-4" />
                               <span>{isNeedsRevision ? "Resubmit Work" : "Submit Work"}</span>
@@ -468,14 +557,13 @@ export default function StudentDashboard() {
                   const defaultRank = "bg-white/5 text-gray-400 border-white/5";
                   
                   return (
-                    <div key={item.uid} className="flex items-center justify-between p-3.5 bg-black/30 border border-white/5 rounded-xl">
+                    <div key={item.uid || item.id} className="flex items-center justify-between p-3.5 bg-black/30 border border-white/5 rounded-xl">
                       <div className="flex items-center gap-3">
                         <div className={`w-8 h-8 rounded-full border flex items-center justify-center font-bold text-sm ${rankColors[index] || defaultRank}`}>
                           {index + 1}
                         </div>
                         <div>
-                          <div className="font-semibold text-sm text-gray-200">{item.name}</div>
-                          <div className="text-[10px] text-gray-500">{item.email.split("@")[0]}</div>
+                          <div className="font-semibold text-sm text-gray-200">{item.displayName || "Student"}</div>
                         </div>
                       </div>
                       <div className="text-right">
@@ -487,6 +575,33 @@ export default function StudentDashboard() {
                 })
               )}
             </div>
+
+            {/* Study Resources */}
+            {resources.length > 0 && (
+              <div className="space-y-4 pt-2">
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <FileText className="w-6 h-6 text-emerald-500" />
+                  <span>Study Resources</span>
+                </h2>
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md space-y-3">
+                  {resources.map((res) => (
+                    <a
+                      key={res.id}
+                      href={res.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between p-3.5 bg-black/30 border border-white/5 rounded-xl hover:border-white/20 transition-colors group"
+                    >
+                      <div>
+                        <div className="font-semibold text-sm text-gray-200 group-hover:text-white">{res.title}</div>
+                        <div className="text-[10px] text-gray-500 uppercase">{res.type || "link"}</div>
+                      </div>
+                      <ExternalLink className="w-4 h-4 text-gray-500 group-hover:text-secondary-500" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Attendance History */}
             <div className="space-y-6 pt-6">
@@ -541,7 +656,7 @@ export default function StudentDashboard() {
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 50 }}
-              className="bg-zinc-950 border border-white/10 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-lg overflow-hidden flex flex-col text-white"
+              className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-lg overflow-hidden flex flex-col text-zinc-900 dark:text-white max-h-[90vh]"
             >
               <div className="p-5 border-b border-white/10 flex justify-between items-center bg-white/5">
                 <div>
@@ -553,19 +668,19 @@ export default function StudentDashboard() {
                 </button>
               </div>
 
-              <div className="p-5">
+              <div className="p-5 overflow-y-auto">
                 <form id="submission-form" onSubmit={handleSubmitWork} className="space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-gray-300">Did you finish your task?</label>
+                    <label className="text-sm font-medium text-zinc-700 dark:text-gray-300">Did you finish your task?</label>
                     <textarea
                       rows={4}
                       required
                       value={taskAnswer}
                       onChange={e => setTaskAnswer(e.target.value)}
                       placeholder="Write your answer or share your opinion about completing this task..."
-                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 focus:border-secondary-500 outline-none text-white text-sm resize-none"
+                      className="w-full px-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 focus:border-secondary-500 outline-none text-zinc-900 dark:text-white text-sm resize-none"
                     />
-                    <p className="text-[10px] text-gray-500">
+                    <p className="text-[10px] text-zinc-500 dark:text-gray-500">
                       After you submit, admin will review your response on social media. Once approved, this task will be marked as completed.
                     </p>
                   </div>

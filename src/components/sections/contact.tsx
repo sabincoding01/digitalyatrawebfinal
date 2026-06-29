@@ -69,7 +69,7 @@ export function Contact() {
   };
 
   return (
-    <section id="contact" className="py-24 bg-background relative">
+    <section id="contact" className="py-24 bg-background relative scroll-mt-header">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <span className="text-secondary-500 font-semibold tracking-wider uppercase text-sm">Get In Touch</span>

@@ -8,7 +8,7 @@ export const metadata = {
 
 export default function PrivacyPolicy() {
   return (
-    <div className="min-h-screen bg-background text-foreground py-24 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background text-foreground pt-24 pb-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto space-y-8">
         <Link href="/" className="inline-flex items-center gap-2 text-secondary-500 hover:text-secondary-600 font-semibold transition-colors text-sm">
           <ArrowLeft className="w-4 h-4" /> Back to Home
@@ -20,7 +20,7 @@ export default function PrivacyPolicy() {
           </div>
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Privacy Policy</h1>
-            <p className="text-sm text-gray-500 mt-1">Last updated: June 28, 2026</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Last updated: June 28, 2026</p>
           </div>
         </div>
 

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { User, signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, setDoc, onSnapshot, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, onSnapshot, serverTimestamp, updateDoc } from "firebase/firestore";
 import { auth, googleProvider, db } from "@/lib/firebase";
 import { useRouter, usePathname } from "next/navigation";
 
@@ -13,6 +13,8 @@ interface DbUser {
   role: "student" | "admin";
   status: "pending" | "approved" | "rejected";
   photoURL?: string;
+  socialHandle?: string;
+  socialPlatform?: string;
   createdAt: any;
 }
 
@@ -22,6 +24,7 @@ interface AuthContextType {
   loading: boolean;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (data: Pick<DbUser, "displayName" | "socialHandle" | "socialPlatform">) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -127,8 +130,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateProfile = async (data: Pick<DbUser, "displayName" | "socialHandle" | "socialPlatform">) => {
+    if (!user) throw new Error("Not signed in");
+    const userRef = doc(db, "users", user.uid);
+    await updateDoc(userRef, data);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, dbUser, loading, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, dbUser, loading, loginWithGoogle, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

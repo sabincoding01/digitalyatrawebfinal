@@ -20,7 +20,7 @@ const navLinks = [
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
 
@@ -38,8 +38,14 @@ export function Navbar() {
   }, []);
 
   const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
+    if (theme === "system") {
+      setTheme(resolvedTheme === "dark" ? "light" : "dark");
+      return;
+    }
+    setTheme(resolvedTheme === "dark" ? "light" : "dark");
   };
+
+  const isDark = resolvedTheme === "dark";
 
   const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
@@ -91,7 +97,7 @@ export function Navbar() {
             <Image src="/logo.png" alt="Digital Yatra Logo" width={48} height={48} className="h-9 sm:h-12 w-auto object-contain shrink-0" priority />
             <div className="font-bold tracking-widest text-base sm:text-xl flex gap-1 sm:gap-1.5 items-center mt-1 min-w-0">
               <span className="text-[#F7941D] shrink-0">DIGITAL</span>
-              <span className={`transition-colors duration-300 shrink-0 ${shouldBeSolid ? "text-primary-950 dark:text-white" : "text-white"}`}>
+              <span className={`hidden sm:inline transition-colors duration-300 shrink-0 ${shouldBeSolid ? "text-primary-950 dark:text-white" : "text-white"}`}>
                 YATRA
               </span>
             </div>
@@ -111,7 +117,7 @@ export function Navbar() {
                   className="p-2 rounded-full transition-colors hover:bg-foreground/5"
                   aria-label="Toggle Theme"
                 >
-                  {theme === "dark" ? (
+                  {isDark ? (
                     <Sun className="w-5 h-5 text-yellow-400" />
                   ) : (
                     <Moon className="w-5 h-5 text-primary-900 dark:text-white" />
@@ -145,7 +151,7 @@ export function Navbar() {
                   }`}
                   aria-label="Toggle Theme"
                 >
-                  {theme === "dark" ? (
+                  {isDark ? (
                     <Sun className="w-5 h-5 text-yellow-400" />
                   ) : (
                     <Moon className={`w-5 h-5 ${shouldBeSolid ? "text-primary-900 dark:text-white" : "text-white"}`} />
@@ -180,8 +186,9 @@ export function Navbar() {
                 className={`p-2 rounded-full transition-colors ${
                   shouldBeSolid ? "hover:bg-foreground/5" : "hover:bg-white/10"
                 }`}
+                aria-label="Toggle theme"
               >
-                {theme === "dark" ? (
+                {isDark ? (
                   <Sun className="w-5 h-5 text-yellow-400" />
                 ) : (
                   <Moon className={`w-5 h-5 ${shouldBeSolid ? "text-primary-900 dark:text-white" : "text-white"}`} />
@@ -214,7 +221,7 @@ export function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden border-t border-white/10 bg-background/95 backdrop-blur-md"
+            className="lg:hidden border-t border-zinc-200/80 dark:border-white/10 bg-background/95 backdrop-blur-md"
           >
             <div className="container mx-auto px-4 py-4 flex flex-col gap-4">
               {navLinks.map((link) => (
