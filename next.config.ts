@@ -24,7 +24,7 @@ const securityHeaders = [
   // Permissions policy — disable unused browser features
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+    value: "camera=(), microphone=(), geolocation=()",
   },
   // Force HTTPS for 1 year
   {
@@ -41,12 +41,12 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://embed.tawk.to https://*.tawk.to https://www.googletagmanager.com https://www.google-analytics.com https://ssl.google-analytics.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://embed.tawk.to https://*.tawk.to https://www.googletagmanager.com https://www.google-analytics.com https://ssl.google-analytics.com https://apis.google.com https://*.firebaseapp.com https://www.gstatic.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.tawk.to",
       "font-src 'self' https://fonts.gstatic.com https://*.tawk.to",
       "img-src 'self' data: blob: https: http:",
       "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://firestore.googleapis.com wss://*.firebaseio.com https://*.tawk.to wss://*.tawk.to https://www.google-analytics.com https://analytics.google.com https://stats.g.doubleclick.net https://www.google.com https://api.web3forms.com https://region1.google-analytics.com https://firebasestorage.googleapis.com",
-      "frame-src 'self' https://embed.tawk.to",
+      "frame-src 'self' https://embed.tawk.to https://digitalyatraweb.firebaseapp.com https://*.firebaseapp.com https://apis.google.com",
       "worker-src 'self' blob:",
       "object-src 'none'",
       "base-uri 'self'",

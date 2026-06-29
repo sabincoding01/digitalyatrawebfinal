@@ -1,11 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { ArrowUp, MessageCircle, Star, X, HelpCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { TestimonialForm } from "./TestimonialForm";
 
 export function FloatingActions() {
+  const pathname = usePathname();
+  const isAppRoute = pathname.startsWith("/admin") || pathname.startsWith("/portal");
+
   const [isVisible, setIsVisible] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
@@ -49,6 +53,8 @@ export function FloatingActions() {
       behavior: "smooth",
     });
   };
+
+  if (isAppRoute) return null;
 
   return (
     <>

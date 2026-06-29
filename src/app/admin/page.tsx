@@ -1,19 +1,21 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { collection, query, onSnapshot, doc, deleteDoc, updateDoc, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, query, onSnapshot, doc, deleteDoc, updateDoc, addDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { db, storage } from "@/lib/firebase";
 import {
   Trash2, CheckCircle, Clock, AlertCircle, Plus, X, Image as ImageIcon,
-  Loader2, Lock, Pencil, Save, FileText, ExternalLink, Phone, Mail, User, MessageSquare
+  Loader2, Lock, Pencil, Save, FileText, ExternalLink, Phone, Mail, User, MessageSquare, Calendar
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 
 const ADMIN_PIN = "5993";
 
 export default function AdminPage() {
+  const { dbUser } = useAuth();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState("");
@@ -30,6 +32,9 @@ export default function AdminPage() {
     subscribers: [],
     courseLeads: [],
     contacts: [],
+    users: [],
+    tasks: [],
+    submissions: [],
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,10 +54,61 @@ export default function AdminPage() {
   const [pdfUploadProgress, setPdfUploadProgress] = useState(0);
   const pdfInputRef = useRef<HTMLInputElement>(null);
 
+  // Student Portal Admin State
+  const [studentSearch, setStudentSearch] = useState("");
+  const [studentFilterStatus, setStudentFilterStatus] = useState("all");
+  const [submissionFilterTask, setSubmissionFilterTask] = useState("all");
+  const [gradingSubmission, setGradingSubmission] = useState<any | null>(null);
+  const [gradingStatus, setGradingStatus] = useState<"approved" | "needs_revision">("approved");
+  const [gradingFeedback, setGradingFeedback] = useState("");
+  const [attendanceViewSession, setAttendanceViewSession] = useState<any | null>(null);
+
+  // Settings Tab State
+  const [meetLink, setMeetLink] = useState("");
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  useEffect(() => {
+    if (data.settings) {
+      const liveClassDoc = data.settings.find((s: any) => s.id === "liveClass");
+      if (liveClassDoc && liveClassDoc.meetLink) {
+        setMeetLink(liveClassDoc.meetLink);
+      }
+    }
+  }, [data.settings]);
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!meetLink) return;
+    try {
+      new URL(meetLink);
+    } catch (_) {
+      toast.error("Please enter a valid URL");
+      return;
+    }
+    
+    setIsSavingSettings(true);
+    try {
+      await setDoc(doc(db, "settings", "liveClass"), {
+        meetLink,
+        updatedAt: serverTimestamp(),
+        updatedBy: dbUser?.uid || "admin",
+      }, { merge: true });
+      toast.success("Settings saved successfully!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to save settings");
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
+
   useEffect(() => {
     if (!isAuthenticated) return;
     try {
-      const collections = ["testimonials", "services", "courses", "projects", "stats", "blogs", "careers", "subscribers", "courseLeads", "contacts"];
+      const collections = [
+        "testimonials", "services", "courses", "projects", "stats", "blogs", "careers", 
+        "subscribers", "courseLeads", "contacts", "users", "tasks", "submissions", "settings", "classSessions", "attendance"
+      ];
       const unsubscribes = collections.map(colName => {
         const q = query(collection(db, colName));
         return onSnapshot(q, (snapshot) => {
@@ -61,8 +117,16 @@ export default function AdminPage() {
             docs.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
           } else {
             docs.sort((a: any, b: any) => {
-              const aTime = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.subscribedAt?.toMillis ? a.subscribedAt.toMillis() : 0);
-              const bTime = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.subscribedAt?.toMillis ? b.subscribedAt.toMillis() : 0);
+              const aTime = a.createdAt?.toMillis 
+                ? a.createdAt.toMillis() 
+                : (a.subscribedAt?.toMillis 
+                  ? a.subscribedAt.toMillis() 
+                  : (a.submittedAt?.toMillis ? a.submittedAt.toMillis() : 0));
+              const bTime = b.createdAt?.toMillis 
+                ? b.createdAt.toMillis() 
+                : (b.subscribedAt?.toMillis 
+                  ? b.subscribedAt.toMillis() 
+                  : (b.submittedAt?.toMillis ? b.submittedAt.toMillis() : 0));
               return bTime - aTime;
             });
           }
@@ -122,6 +186,54 @@ export default function AdminPage() {
       toast.success(`Contact marked as ${newStatus}`);
     } catch (err) {
       toast.error("Failed to update status");
+    }
+  };
+
+  // --- PORTAL ACTIONS ---
+  const handleStudentStatus = async (uid: string, newStatus: "approved" | "rejected") => {
+    try {
+      await updateDoc(doc(db, "users", uid), { status: newStatus });
+      toast.success(`Student status updated to ${newStatus}`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update student status");
+    }
+  };
+
+  const handleGradeSubmission = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!gradingSubmission) return;
+
+    try {
+      await updateDoc(doc(db, "submissions", gradingSubmission.id), {
+        status: gradingStatus,
+        feedback: gradingFeedback,
+        viewedByStudent: false,
+      });
+      toast.success(gradingStatus === "approved" ? "Task marked as completed!" : "Sent back for revision.");
+      setGradingSubmission(null);
+      setGradingFeedback("");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to grade submission");
+    }
+  };
+
+  const handleSubmissionStatus = async (
+    subId: string,
+    newStatus: "approved" | "needs_revision",
+    feedback = ""
+  ) => {
+    try {
+      await updateDoc(doc(db, "submissions", subId), {
+        status: newStatus,
+        feedback,
+        viewedByStudent: false,
+      });
+      toast.success(newStatus === "approved" ? "Task marked as completed!" : "Sent back for revision.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update submission");
     }
   };
 
@@ -214,6 +326,20 @@ export default function AdminPage() {
   };
 
   // --- LOGIN SCREEN ---
+  if (dbUser && dbUser.role === "student") {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-zinc-900 border border-white/10 rounded-2xl p-8 text-center space-y-4">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto animate-pulse" />
+          <h1 className="text-xl font-bold">Unauthorized Access</h1>
+          <p className="text-sm text-gray-400">
+            Student accounts are not permitted to access the administrator panel.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center p-4">
@@ -272,13 +398,18 @@ export default function AdminPage() {
     { id: "stats", label: "Stats" },
     { id: "subscribers", label: "Newsletter Leads" },
     { id: "courseLeads", label: "Syllabus Leads" },
+    { id: "users", label: "🎓 Portal: Students" },
+    { id: "tasks", label: "📋 Portal: Tasks" },
+    { id: "submissions", label: "📝 Portal: Submissions" },
+    { id: "classSessions", label: "🗓️ Portal: Live Classes" },
+    { id: "settings", label: "⚙️ Settings" },
   ];
 
-  const readOnlyTabs = ["testimonials", "subscribers", "courseLeads", "contacts"];
+  const readOnlyTabs = ["testimonials", "subscribers", "courseLeads", "contacts", "users", "submissions", "settings"];
   const newContactCount = data.contacts?.filter((c: any) => c.status === "new").length || 0;
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 pt-24 pb-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-6">
 
         {/* Header */}
@@ -310,7 +441,8 @@ export default function AdminPage() {
         )}
 
         {/* Tabs - horizontally scrollable on mobile */}
-        <div className="flex gap-2 pb-2 overflow-x-auto hide-scrollbar border-b border-zinc-200 dark:border-zinc-800">
+        <div className="w-full max-w-full">
+          <div className="flex gap-2 pb-2 overflow-x-auto hide-scrollbar border-b border-zinc-200 dark:border-zinc-800">
           {tabs.map(tab => (
             <button
               key={tab.id}
@@ -329,6 +461,7 @@ export default function AdminPage() {
               )}
             </button>
           ))}
+          </div>
         </div>
 
         {/* Content Panel */}
@@ -497,8 +630,329 @@ export default function AdminPage() {
             </div>
           )}
 
+          {/* ===== STUDENTS TAB ===== */}
+          {activeTab === "users" && (
+            <div className="p-6 space-y-6">
+              {/* Search & Filter Controls */}
+              <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-zinc-50 dark:bg-zinc-800/40 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 animate-fade-in">
+                <input
+                  type="text"
+                  placeholder="Search students by name or email..."
+                  value={studentSearch}
+                  onChange={e => setStudentSearch(e.target.value)}
+                  className="w-full sm:max-w-xs px-4 py-2.5 text-sm rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                />
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <select
+                    value={studentFilterStatus}
+                    onChange={e => setStudentFilterStatus(e.target.value)}
+                    className="w-full sm:w-auto px-4 py-2.5 text-sm rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                  >
+                    <option value="all">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Students List */}
+              <div className="divide-y divide-zinc-100 dark:divide-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden bg-white dark:bg-zinc-900">
+                {(() => {
+                  const filteredStudents = (data.users || [])
+                    .filter((u: any) => u.role === "student")
+                    .filter((u: any) => {
+                      const matchesSearch = (u.displayName || "").toLowerCase().includes(studentSearch.toLowerCase()) ||
+                        (u.email || "").toLowerCase().includes(studentSearch.toLowerCase());
+                      const matchesStatus = studentFilterStatus === "all" || u.status === studentFilterStatus;
+                      return matchesSearch && matchesStatus;
+                    });
+
+                  if (filteredStudents.length === 0) {
+                    return <div className="px-6 py-12 text-center text-zinc-500">No students matching the criteria.</div>;
+                  }
+
+                  return filteredStudents.map((student: any) => (
+                    <div key={student.id} className="p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/10 transition-colors">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-lg shrink-0">
+                          {student.displayName?.charAt(0)}
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                            {student.displayName}
+                          </h3>
+                          <p className="text-sm text-zinc-500 dark:text-zinc-400">{student.email}</p>
+                          <p className="text-xs text-zinc-400 mt-1">Joined: {student.createdAt ? new Date(student.createdAt.toDate()).toLocaleDateString() : "Pending"}</p>
+                          {student.status === "approved" && (() => {
+                            const studentJoinDate = student.createdAt?.toMillis ? student.createdAt.toMillis() : 0;
+                            const pastSessions = (data.classSessions || []).filter((s: any) => {
+                              const sessionTime = new Date(`${s.date}T${s.startTime}`).getTime();
+                              return sessionTime < Date.now() && sessionTime >= studentJoinDate;
+                            });
+                            const attendedCount = pastSessions.filter((s: any) => 
+                              data.attendance?.some((a: any) => a.sessionId === s.id && a.studentUid === student.id)
+                            ).length;
+                            const percentage = pastSessions.length > 0 ? Math.round((attendedCount / pastSessions.length) * 100) : 0;
+                            
+                            return (
+                              <p className="text-xs font-medium mt-1 text-blue-600 dark:text-blue-400">
+                                Attendance: {percentage}% ({attendedCount}/{pastSessions.length} sessions)
+                              </p>
+                            );
+                          })()}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                        {/* Status Badge */}
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase ${
+                          student.status === "approved" 
+                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400"
+                            : student.status === "rejected"
+                              ? "bg-red-100 text-red-800 dark:bg-red-950/30 dark:text-red-400"
+                              : "bg-amber-100 text-amber-800 dark:bg-amber-950/30 dark:text-amber-400"
+                        }`}>
+                          {student.status || "pending"}
+                        </span>
+
+                        {/* Status update buttons */}
+                        <div className="flex gap-1.5">
+                          {student.status !== "approved" && (
+                            <button
+                              onClick={() => handleStudentStatus(student.id, "approved")}
+                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg transition-colors cursor-pointer"
+                            >
+                              Approve
+                            </button>
+                          )}
+                          {student.status !== "rejected" && (
+                            <button
+                              onClick={() => handleStudentStatus(student.id, "rejected")}
+                              className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-lg transition-colors cursor-pointer"
+                            >
+                              Reject
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDelete("users", student.id)}
+                            className="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors border border-transparent"
+                            title="Delete Account"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ));
+                })()}
+              </div>
+            </div>
+          )}
+
+          {/* ===== SUBMISSIONS TAB ===== */}
+          {activeTab === "submissions" && (
+            <div className="p-6 space-y-6 animate-fade-in">
+              {/* Task Dropdown Selector & Filter */}
+              <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-zinc-50 dark:bg-zinc-800/40 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto items-center">
+                  <label className="text-sm font-medium text-zinc-600 dark:text-zinc-400 shrink-0">Filter by Task:</label>
+                  <select
+                    value={submissionFilterTask}
+                    onChange={e => setSubmissionFilterTask(e.target.value)}
+                    className="w-full sm:w-64 px-4 py-2.5 text-sm rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                  >
+                    <option value="all">All Tasks</option>
+                    {(data.tasks || []).map((t: any) => (
+                      <option key={t.id} value={t.id}>{t.title}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Submissions List */}
+              <div className="divide-y divide-zinc-100 dark:divide-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden bg-white dark:bg-zinc-900">
+                {(() => {
+                  const filteredSubmissions = (data.submissions || [])
+                    .filter((s: any) => submissionFilterTask === "all" || s.taskId === submissionFilterTask);
+
+                  if (filteredSubmissions.length === 0) {
+                    return <div className="px-6 py-12 text-center text-zinc-500">No submissions found.</div>;
+                  }
+
+                  return filteredSubmissions.map((sub: any) => {
+                    const associatedTask = (data.tasks || []).find((t: any) => t.id === sub.taskId);
+                    
+                    return (
+                      <div key={sub.id} className="p-5 hover:bg-zinc-50 dark:hover:bg-zinc-800/10 transition-colors flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                        <div className="space-y-2 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-semibold text-zinc-950 dark:text-white text-base">{sub.studentName}</span>
+                            <span className="text-zinc-400">•</span>
+                            <span className="text-zinc-500 text-sm">{sub.studentEmail}</span>
+                          </div>
+
+                          <div className="space-y-1">
+                            <div className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                              Task: {associatedTask ? associatedTask.title : "Unknown Task"}
+                            </div>
+                            <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+                              <span>Submitted: {sub.submittedAt ? new Date(sub.submittedAt.toDate()).toLocaleString() : "Unknown"}</span>
+                            </div>
+                          </div>
+
+                          <div className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-100 dark:border-zinc-900 space-y-2 max-w-2xl">
+                            <div className="text-sm text-zinc-600 dark:text-zinc-300">
+                              <span className="font-semibold text-zinc-500 dark:text-zinc-400">Did you finish your task? — </span>
+                              {sub.answer || sub.note || sub.link || "No response provided"}
+                            </div>
+                            {sub.feedback && (
+                              <div className="text-xs text-amber-600 dark:text-amber-400 mt-1 border-t border-zinc-100 dark:border-zinc-800 pt-1">
+                                <span className="font-semibold">Instructor Feedback: </span>
+                                {sub.feedback}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row md:flex-col items-end gap-3 shrink-0">
+                          {/* Status Badge */}
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
+                            sub.status === "approved" 
+                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400"
+                              : sub.status === "needs_revision"
+                                ? "bg-amber-100 text-amber-800 dark:bg-amber-950/30 dark:text-amber-400"
+                                : "bg-blue-100 text-blue-800 dark:bg-blue-950/30 dark:text-blue-400"
+                          }`}>
+                            {sub.status === "approved"
+                              ? "Completed"
+                              : sub.status === "needs_revision"
+                                ? "Needs Revision"
+                                : "Pending Review"}
+                          </span>
+
+                          <div className="flex flex-wrap gap-2 justify-end">
+                            {sub.status !== "approved" && (
+                              <button
+                                onClick={() => handleSubmissionStatus(sub.id, "approved")}
+                                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm cursor-pointer"
+                              >
+                                Approve
+                              </button>
+                            )}
+                            {sub.status !== "needs_revision" && sub.status !== "approved" && (
+                              <button
+                                onClick={() => handleSubmissionStatus(sub.id, "needs_revision")}
+                                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm cursor-pointer"
+                              >
+                                Needs Revision
+                              </button>
+                            )}
+                            <button
+                              onClick={() => {
+                                setGradingSubmission(sub);
+                                setGradingStatus(sub.status === "needs_revision" ? "needs_revision" : "approved");
+                                setGradingFeedback(sub.feedback || "");
+                              }}
+                              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm cursor-pointer"
+                            >
+                              Add Feedback
+                            </button>
+                            <button
+                              onClick={() => handleDelete("submissions", sub.id)}
+                              className="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                              title="Delete Submission"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </div>
+          )}
+
+          {/* ===== SETTINGS TAB ===== */}
+          {activeTab === "settings" && (
+            <div className="p-6 space-y-8 animate-fade-in">
+              <div className="max-w-2xl">
+                <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-1">Live Class Settings</h3>
+                <p className="text-sm text-zinc-500 mb-6">Manage the recurring Google Meet link for student live classes.</p>
+                
+                <form onSubmit={handleSaveSettings} className="space-y-4 bg-zinc-50 dark:bg-zinc-800/40 p-6 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 block">Google Meet URL</label>
+                    <input
+                      type="url"
+                      required
+                      value={meetLink}
+                      onChange={(e) => setMeetLink(e.target.value)}
+                      placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                      className="w-full px-4 py-2.5 text-sm rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                    />
+                    <p className="text-xs text-zinc-500 mt-1">This link will be displayed to all approved students in their portal.</p>
+                  </div>
+                  
+                  <button 
+                    type="submit" 
+                    disabled={isSavingSettings}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors cursor-pointer disabled:opacity-70"
+                  >
+                    {isSavingSettings ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    Save Settings
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* ===== CLASS SESSIONS TAB ===== */}
+          {activeTab === "classSessions" && (
+            <div className="p-6 space-y-6 animate-fade-in">
+              <div className="divide-y divide-zinc-100 dark:divide-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden bg-white dark:bg-zinc-900">
+                {(!data.classSessions || data.classSessions.length === 0) ? (
+                  <div className="px-6 py-12 text-center text-zinc-500">No class sessions scheduled yet. Click "Add New Entry" to create one.</div>
+                ) : (
+                  data.classSessions.map((session: any) => {
+                    const sessionAttendance = (data.attendance || []).filter((a: any) => a.sessionId === session.id);
+                    return (
+                      <div key={session.id} className="p-5 hover:bg-zinc-50 dark:hover:bg-zinc-800/10 transition-colors flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                        <div className="space-y-2 flex-1">
+                          <h3 className="font-semibold text-zinc-950 dark:text-white text-base">{session.title}</h3>
+                          <div className="flex flex-wrap gap-3 text-sm text-zinc-500">
+                            <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /> {session.date}</span>
+                            <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> {session.startTime}</span>
+                            <span className="flex items-center gap-1.5"><User className="w-4 h-4" /> {sessionAttendance.length} Checked In</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            onClick={() => setAttendanceViewSession(session)}
+                            className="px-4 py-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                          >
+                            View Attendance
+                          </button>
+                          <button
+                            onClick={() => handleDelete("classSessions", session.id)}
+                            className="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            title="Delete Session"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
+
           {/* ===== ALL OTHER TABS (table view) ===== */}
-          {!["contacts", "stats"].includes(activeTab) && (
+          {!["contacts", "stats", "users", "submissions", "settings", "classSessions"].includes(activeTab) && (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -543,6 +997,12 @@ export default function AdminPage() {
                             {item.duration && <p>{item.duration}</p>}
                             {item.category && <p>{item.category}</p>}
                             {item.target && !item.label && <p>Target: {item.target}{item.suffix || ''}</p>}
+                            {activeTab === "tasks" && item.deadline && <p>📅 Deadline: {item.deadline}</p>}
+                            {activeTab === "tasks" && item.referenceLink && (
+                              <a href={item.referenceLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 mt-1 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400">
+                                <ExternalLink className="w-3 h-3" /> Reference Link
+                              </a>
+                            )}
                           </div>
                           {/* Syllabus PDF link for courses */}
                           {activeTab === "courses" && item.syllabusUrl && (
@@ -614,7 +1074,7 @@ export default function AdminPage() {
                 <form id="add-form" onSubmit={handleSubmit} className="space-y-4">
 
                   {/* Common Title */}
-                  {["courses", "projects", "services", "blogs", "careers"].includes(activeTab) && (
+                  {["courses", "projects", "services", "blogs", "careers", "tasks"].includes(activeTab) && (
                     <div className="space-y-1.5">
                       <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Title</label>
                       <input type="text" required value={formData.title || ""} onChange={e => setFormData({ ...formData, title: e.target.value })}
@@ -623,7 +1083,7 @@ export default function AdminPage() {
                   )}
 
                   {/* Common Description */}
-                  {["courses", "projects", "services"].includes(activeTab) && (
+                  {["courses", "projects", "services", "tasks"].includes(activeTab) && (
                     <div className="space-y-1.5">
                       <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Description</label>
                       <textarea required rows={3} value={formData.description || ""} onChange={e => setFormData({ ...formData, description: e.target.value })}
@@ -704,6 +1164,47 @@ export default function AdminPage() {
                             </div>
                           </div>
                         )}
+                      </div>
+                    </>
+                  )}
+
+                  {/* ===== PORTAL TASKS ===== */}
+                  {activeTab === "tasks" && (
+                    <>
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Reference Link (Optional URL)</label>
+                        <input type="url" value={formData.referenceLink || ""} onChange={e => setFormData({ ...formData, referenceLink: e.target.value })}
+                          placeholder="e.g. Google Drive folder or brief PDF link"
+                          className="w-full px-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white text-sm" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Deadline</label>
+                        <input type="date" required value={formData.deadline || ""} onChange={e => setFormData({ ...formData, deadline: e.target.value })}
+                          className="w-full px-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white text-sm" />
+                      </div>
+                    </>
+                  )}
+
+                  {/* ===== CLASS SESSIONS ===== */}
+                  {activeTab === "classSessions" && (
+                    <>
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Session Title</label>
+                        <input type="text" required value={formData.title || ""} onChange={e => setFormData({ ...formData, title: e.target.value })}
+                          placeholder="e.g. Week 1 - React Basics"
+                          className="w-full px-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white text-sm" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Date (YYYY-MM-DD)</label>
+                          <input type="date" required value={formData.date || ""} onChange={e => setFormData({ ...formData, date: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white text-sm" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Start Time (24h)</label>
+                          <input type="time" required value={formData.startTime || ""} onChange={e => setFormData({ ...formData, startTime: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white text-sm" />
+                        </div>
                       </div>
                     </>
                   )}
@@ -854,6 +1355,162 @@ export default function AdminPage() {
                   {(isSubmitting || pdfUploading) && <Loader2 className="w-4 h-4 animate-spin" />}
                   {pdfUploading ? `Uploading... ${pdfUploadProgress}%` : "Save Entry"}
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ===== GRADING MODAL ===== */}
+      <AnimatePresence>
+        {gradingSubmission && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 50 }}
+              className="bg-white dark:bg-zinc-900 rounded-t-2xl sm:rounded-2xl shadow-xl w-full sm:max-w-md overflow-hidden flex flex-col"
+            >
+              <div className="p-5 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center bg-zinc-50 dark:bg-zinc-800/50">
+                <h3 className="text-lg font-bold">Review Student Submission</h3>
+                <button onClick={() => setGradingSubmission(null)} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white p-1 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-5 space-y-4">
+                <div>
+                  <label className="text-xs text-zinc-500 mb-1 block">Student</label>
+                  <p className="font-semibold text-sm text-zinc-950 dark:text-white">{gradingSubmission.studentName}</p>
+                </div>
+                <div>
+                  <label className="text-xs text-zinc-500 mb-1 block">Did you finish your task?</label>
+                  <p className="text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap">
+                    {gradingSubmission.answer || gradingSubmission.note || gradingSubmission.link || "No response provided"}
+                  </p>
+                  <p className="text-xs text-zinc-500 mt-2">Review this on social media, then approve to mark the task as completed.</p>
+                </div>
+
+                <form id="grade-form" onSubmit={handleGradeSubmission} className="space-y-4 pt-2">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Review Status</label>
+                    <select
+                      value={gradingStatus}
+                      onChange={e => setGradingStatus(e.target.value as any)}
+                      className="w-full px-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white text-sm"
+                    >
+                      <option value="approved">Approved — Mark task completed</option>
+                      <option value="needs_revision">Needs Revision</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Feedback / Notes</label>
+                    <textarea
+                      rows={3}
+                      value={gradingFeedback}
+                      onChange={e => setGradingFeedback(e.target.value)}
+                      placeholder="Excellent work! / Please fix the layout on mobile..."
+                      className="w-full px-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white text-sm resize-none"
+                    />
+                  </div>
+                </form>
+              </div>
+
+              <div className="p-5 border-t border-zinc-200 dark:border-zinc-800 flex justify-end gap-3 bg-zinc-50 dark:bg-zinc-800/50">
+                <button type="button" onClick={() => setGradingSubmission(null)}
+                  className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg transition-colors">
+                  Cancel
+                </button>
+                <button type="submit" form="grade-form"
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors cursor-pointer">
+                  {gradingStatus === "approved" ? "Approve & Save" : "Save Feedback"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ===== ATTENDANCE VIEW MODAL ===== */}
+      <AnimatePresence>
+        {attendanceViewSession && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 50 }}
+              className="bg-white dark:bg-zinc-900 rounded-t-2xl sm:rounded-2xl shadow-xl w-full sm:max-w-2xl overflow-hidden flex flex-col max-h-[92vh]"
+            >
+              <div className="p-5 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center bg-zinc-50 dark:bg-zinc-800/50">
+                <div>
+                  <h3 className="text-lg font-bold">{attendanceViewSession.title} - Roster</h3>
+                  <p className="text-xs text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1 mt-1">
+                    <AlertCircle className="w-3.5 h-3.5" /> Self-Reported Attendance
+                  </p>
+                </div>
+                <button onClick={() => setAttendanceViewSession(null)} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white p-1 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="overflow-y-auto flex-grow p-0">
+                <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  {data.users?.filter((u: any) => u.role === "student" && u.status === "approved").length === 0 ? (
+                    <div className="p-6 text-center text-zinc-500 text-sm">No approved students found.</div>
+                  ) : (
+                    data.users?.filter((u: any) => u.role === "student" && u.status === "approved").map((student: any) => {
+                      const record = data.attendance?.find((a: any) => a.sessionId === attendanceViewSession.id && a.studentUid === student.id);
+                      
+                      return (
+                        <div key={student.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/20 transition-colors">
+                          <div>
+                            <div className="font-medium text-sm text-zinc-900 dark:text-white">{student.displayName}</div>
+                            <div className="text-xs text-zinc-500">{student.email}</div>
+                          </div>
+                          <div className="flex items-center gap-3 shrink-0">
+                            {record ? (
+                              <div className="text-right">
+                                <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs font-semibold rounded-full flex items-center gap-1 justify-end">
+                                  <CheckCircle className="w-3.5 h-3.5" /> Checked In
+                                </span>
+                                <div className="text-[10px] text-zinc-400 mt-1">
+                                  {record.method === "admin_override" ? "Manual Override" : "Self-Reported"} 
+                                  {record.joinedAt ? ` at ${new Date(record.joinedAt.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : ""}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-3">
+                                <span className="px-2.5 py-1 bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 text-xs font-semibold rounded-full flex items-center gap-1">
+                                  <X className="w-3.5 h-3.5" /> Did Not Check In
+                                </span>
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      const recordId = `${attendanceViewSession.id}_${student.id}`;
+                                      await setDoc(doc(db, "attendance", recordId), {
+                                        sessionId: attendanceViewSession.id,
+                                        studentUid: student.id,
+                                        joinedAt: serverTimestamp(),
+                                        method: "admin_override"
+                                      });
+                                      setAttendanceViewSession(prev => ({...prev, _updated: Date.now()}));
+                                    } catch (e) {
+                                      console.error("Failed to mark present.");
+                                    }
+                                  }}
+                                  className="px-3 py-1.5 bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-zinc-800 dark:text-zinc-200 text-xs font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap"
+                                >
+                                  Mark Present Manually
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
               </div>
             </motion.div>
           </div>

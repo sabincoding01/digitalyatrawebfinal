@@ -58,6 +58,7 @@ export function Footer() {
               <li><a href="#services" className="hover:text-secondary-500 transition-colors flex items-center gap-2"><ArrowRight className="w-4 h-4 text-secondary-500" /> Services</a></li>
               <li><a href="#expertise" className="hover:text-secondary-500 transition-colors flex items-center gap-2"><ArrowRight className="w-4 h-4 text-secondary-500" /> Our Expertise</a></li>
               <li><a href="#process" className="hover:text-secondary-500 transition-colors flex items-center gap-2"><ArrowRight className="w-4 h-4 text-secondary-500" /> Working Process</a></li>
+              <li><a href="/portal" className="hover:text-secondary-500 transition-colors flex items-center gap-2"><ArrowRight className="w-4 h-4 text-secondary-500" /> Student Portal</a></li>
               <li><a href="#contact" className="hover:text-secondary-500 transition-colors flex items-center gap-2"><ArrowRight className="w-4 h-4 text-secondary-500" /> Contact Us</a></li>
             </ul>
           </div>

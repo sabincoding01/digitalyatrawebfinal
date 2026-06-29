@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
-import { Moon, Sun, Menu, X, Code2 } from "lucide-react";
+import { Moon, Sun, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
@@ -25,7 +25,8 @@ export function Navbar() {
   const pathname = usePathname();
 
   const isHome = pathname === "/";
-  const shouldBeSolid = isScrolled || !isHome;
+  const isAppRoute = pathname.startsWith("/admin") || pathname.startsWith("/portal");
+  const shouldBeSolid = isScrolled || !isHome || isAppRoute;
 
   useEffect(() => {
     setMounted(true);
@@ -75,25 +76,53 @@ export function Navbar() {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         shouldBeSolid
-          ? "bg-background/80 backdrop-blur-md border-b border-white/10 shadow-sm"
+          ? "bg-background/95 backdrop-blur-md border-b border-zinc-200/80 dark:border-white/10 shadow-sm supports-[backdrop-filter]:bg-background/80"
           : "bg-transparent"
       }`}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-20 gap-4 min-w-0">
           {/* Logo */}
-          <Link href="#home" onClick={(e) => scrollToSection(e, "#home")} className="flex items-center gap-3 group">
-            <Image src="/logo.png" alt="Digital Yatra Logo" width={48} height={48} className="h-10 sm:h-12 w-auto object-contain" priority />
-            <div className="font-bold tracking-widest text-lg sm:text-xl flex gap-1.5 items-center mt-1">
-              <span className="text-[#F7941D]">DIGITAL</span>
-              <span className={`transition-colors duration-300 ${shouldBeSolid ? "text-primary-950 dark:text-white" : "text-white"}`}>
+          <Link
+            href={isAppRoute ? "/" : "#home"}
+            onClick={isAppRoute ? undefined : (e) => scrollToSection(e, "#home")}
+            className="flex items-center gap-2 sm:gap-3 group shrink-0 min-w-0"
+          >
+            <Image src="/logo.png" alt="Digital Yatra Logo" width={48} height={48} className="h-9 sm:h-12 w-auto object-contain shrink-0" priority />
+            <div className="font-bold tracking-widest text-base sm:text-xl flex gap-1 sm:gap-1.5 items-center mt-1 min-w-0">
+              <span className="text-[#F7941D] shrink-0">DIGITAL</span>
+              <span className={`transition-colors duration-300 shrink-0 ${shouldBeSolid ? "text-primary-950 dark:text-white" : "text-white"}`}>
                 YATRA
               </span>
             </div>
           </Link>
 
+          {isAppRoute ? (
+            <nav className="flex items-center gap-3 shrink-0">
+              <Link
+                href="/"
+                className="text-sm font-medium text-foreground/80 hover:text-secondary-500 transition-colors whitespace-nowrap"
+              >
+                Back to Website
+              </Link>
+              {mounted && (
+                <button
+                  onClick={toggleTheme}
+                  className="p-2 rounded-full transition-colors hover:bg-foreground/5"
+                  aria-label="Toggle Theme"
+                >
+                  {theme === "dark" ? (
+                    <Sun className="w-5 h-5 text-yellow-400" />
+                  ) : (
+                    <Moon className="w-5 h-5 text-primary-900 dark:text-white" />
+                  )}
+                </button>
+              )}
+            </nav>
+          ) : (
+          <>
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden lg:flex items-center gap-6 xl:gap-8 min-w-0">
             {navLinks.map((link) => (
               <a
                 key={link.name}
@@ -123,6 +152,16 @@ export function Navbar() {
                   )}
                 </button>
               )}
+              <Link
+                href="/portal"
+                className={`px-5 py-2.5 rounded-full border text-sm font-medium transition-colors hidden lg:block ${
+                  shouldBeSolid 
+                    ? "border-foreground/20 hover:bg-foreground/5 text-foreground" 
+                    : "border-white/30 hover:bg-white/10 text-white"
+                }`}
+              >
+                Student Portal
+              </Link>
               <a
                 href="#contact"
                 onClick={(e) => scrollToSection(e, "#contact")}
@@ -134,7 +173,7 @@ export function Navbar() {
           </nav>
 
           {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center gap-4">
+          <div className="lg:hidden flex items-center gap-4 shrink-0">
             {mounted && (
               <button
                 onClick={toggleTheme}
@@ -163,17 +202,19 @@ export function Navbar() {
               )}
             </button>
           </div>
+          </>
+          )}
         </div>
       </div>
 
       {/* Mobile Navigation */}
       <AnimatePresence>
-        {isMobileMenuOpen && (
+        {isMobileMenuOpen && !isAppRoute && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden border-t border-white/10 bg-background/95 backdrop-blur-md"
+            className="lg:hidden border-t border-white/10 bg-background/95 backdrop-blur-md"
           >
             <div className="container mx-auto px-4 py-4 flex flex-col gap-4">
               {navLinks.map((link) => (
@@ -186,7 +227,14 @@ export function Navbar() {
                   {link.name}
                 </a>
               ))}
-              <div className="pt-4 border-t border-foreground/10 px-4">
+              <div className="pt-4 border-t border-foreground/10 px-4 flex flex-col gap-3">
+                <Link
+                  href="/portal"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex w-full justify-center px-5 py-3 rounded-full border border-foreground/20 hover:bg-foreground/5 text-foreground text-base font-medium transition-colors"
+                >
+                  Student Portal
+                </Link>
                 <a
                   href="#contact"
                   onClick={(e) => scrollToSection(e, "#contact")}
