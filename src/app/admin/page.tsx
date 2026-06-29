@@ -1494,7 +1494,10 @@ export default function AdminPage() {
                                         joinedAt: serverTimestamp(),
                                         method: "admin_override"
                                       });
-                                      setAttendanceViewSession(prev => ({...prev, _updated: Date.now()}));
+                                      setAttendanceViewSession({
+                                        ...attendanceViewSession,
+                                        _updated: Date.now(),
+                                      });
                                     } catch (e) {
                                       console.error("Failed to mark present.");
                                     }
