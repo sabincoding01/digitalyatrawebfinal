@@ -160,7 +160,7 @@ export function Navbar() {
               )}
               <Link
                 href="/portal"
-                className={`px-5 py-2.5 rounded-full border text-sm font-medium transition-colors hidden lg:block ${
+                className={`px-5 py-2.5 rounded-full border text-sm font-medium transition-colors hidden lg:block whitespace-nowrap ${
                   shouldBeSolid 
                     ? "border-foreground/20 hover:bg-foreground/5 text-foreground" 
                     : "border-white/30 hover:bg-white/10 text-white"
@@ -171,7 +171,7 @@ export function Navbar() {
               <a
                 href="#contact"
                 onClick={(e) => scrollToSection(e, "#contact")}
-                className="px-5 py-2.5 rounded-full bg-secondary-500 hover:bg-secondary-600 text-white text-sm font-medium transition-colors"
+                className="px-5 py-2.5 rounded-full bg-secondary-500 hover:bg-secondary-600 text-white text-sm font-medium transition-colors whitespace-nowrap"
               >
                 Get Started
               </a>
@@ -238,14 +238,14 @@ export function Navbar() {
                 <Link
                   href="/portal"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex w-full justify-center px-5 py-3 rounded-full border border-foreground/20 hover:bg-foreground/5 text-foreground text-base font-medium transition-colors"
+                  className="flex w-full justify-center px-5 py-3 rounded-full border border-foreground/20 hover:bg-foreground/5 text-foreground text-base font-medium transition-colors whitespace-nowrap"
                 >
                   Student Portal
                 </Link>
                 <a
                   href="#contact"
                   onClick={(e) => scrollToSection(e, "#contact")}
-                  className="flex w-full justify-center px-5 py-3 rounded-full bg-secondary-500 hover:bg-secondary-600 text-white text-base font-medium transition-colors"
+                  className="flex w-full justify-center px-5 py-3 rounded-full bg-secondary-500 hover:bg-secondary-600 text-white text-base font-medium transition-colors whitespace-nowrap"
                 >
                   Get Started
                 </a>

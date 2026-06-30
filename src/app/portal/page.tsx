@@ -246,7 +246,7 @@ export default function StudentDashboard() {
   // New Grades Notifications
   const unreadGrades = mySubmissions.filter(s => s.viewedByStudent === false);
 
-  // Active Session Logic
+  // Active/Today Session Calculation for History & Live Banner
   const now = new Date();
   const activeSession = classSessions.find((session: any) => {
     if (!session.date || !session.startTime) return false;
@@ -254,6 +254,26 @@ export default function StudentDashboard() {
     const sessionEndTime = new Date(sessionTime.getTime() + 3 * 60 * 60 * 1000); // 3 hours after start
     return sessionEndTime > now; 
   });
+
+  const getTodayString = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  const todayStr = getTodayString();
+
+  // Fix 2: Prepend today's session in history if student joined it
+  const todayAttendedSessions = classSessions.filter(session => {
+    const isToday = session.date === todayStr;
+    const attended = myAttendance.some((a: any) => a.sessionId === session.id);
+    return isToday && attended;
+  });
+
+  const baseHistorySessions = classSessions.filter(s => s.id !== activeSession?.id);
+  const filteredBaseHistory = baseHistorySessions.filter(s => !todayAttendedSessions.some(t => t.id === s.id));
+  const displayHistorySessions = [...todayAttendedSessions, ...filteredBaseHistory];
 
   return (
     <div className="portal-page pb-12 px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
@@ -285,11 +305,11 @@ export default function StudentDashboard() {
 
         {/* Unread Grade Alerts */}
         {unreadGrades.length > 0 && (
-          <div className="bg-secondary-500/20 border border-secondary-500/30 text-secondary-300 px-6 py-4 rounded-2xl flex items-start gap-3.5 shadow-[0_0_15px_rgba(247,148,29,0.05)]">
+          <div className="bg-secondary-50/80 dark:bg-secondary-500/20 border border-secondary-200 dark:border-secondary-500/30 text-secondary-800 dark:text-secondary-300 px-6 py-4 rounded-2xl flex items-start gap-3.5 shadow-[0_0_15px_rgba(247,148,29,0.05)]">
             <Bell className="w-5 h-5 flex-shrink-0 mt-0.5 animate-bounce text-secondary-500" />
             <div>
-              <h4 className="font-bold text-white text-sm">Instructor Graded Your Submission!</h4>
-              <p className="text-xs text-gray-300 mt-1">
+              <h4 className="font-bold text-zinc-900 dark:text-white text-sm">Instructor Graded Your Submission!</h4>
+              <p className="text-xs text-zinc-600 dark:text-gray-300 mt-1">
                 Please check the task details below for grades, revisions required, or feedback from your instructor.
               </p>
             </div>
@@ -300,11 +320,11 @@ export default function StudentDashboard() {
         {announcements.length > 0 && (
           <div className="space-y-3">
             {announcements.map((item) => (
-              <div key={item.id} className="bg-blue-600/10 border border-blue-500/20 px-6 py-4 rounded-2xl flex items-start gap-3">
-                <Megaphone className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
+              <div key={item.id} className="bg-blue-50 dark:bg-blue-600/10 border border-blue-100 dark:border-blue-500/20 px-6 py-4 rounded-2xl flex items-start gap-3">
+                <Megaphone className="w-5 h-5 text-blue-500 dark:text-blue-400 shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-bold text-white text-sm">{item.title}</h4>
-                  <p className="text-xs text-gray-300 mt-1 whitespace-pre-line">{item.message}</p>
+                  <h4 className="font-bold text-zinc-900 dark:text-white text-sm">{item.title}</h4>
+                  <p className="text-xs text-zinc-600 dark:text-gray-300 mt-1 whitespace-pre-line">{item.message}</p>
                 </div>
               </div>
             ))}
@@ -313,7 +333,7 @@ export default function StudentDashboard() {
 
         {/* Profile / Social handle for admin review */}
         <div className="portal-card rounded-2xl p-6 backdrop-blur-md">
-          <h2 className="text-sm font-bold text-white flex items-center gap-2 mb-4">
+          <h2 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2 mb-4">
             <User className="w-4 h-4 text-secondary-500" /> Your Profile
           </h2>
           <form onSubmit={handleSaveProfile} className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
@@ -350,7 +370,7 @@ export default function StudentDashboard() {
                   Save
                 </button>
               </div>
-              <p className="text-[10px] text-gray-500">Admin uses this to verify your task posts on social media.</p>
+              <p className="text-[10px] text-zinc-500 dark:text-gray-500 font-medium">Admin uses this to verify your task posts on social media.</p>
             </div>
           </form>
         </div>
@@ -362,7 +382,7 @@ export default function StudentDashboard() {
               <BookOpen className="w-6 h-6" />
             </div>
             <div>
-              <div className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Total Tasks</div>
+              <div className="text-xs text-zinc-500 dark:text-gray-400 uppercase tracking-wider font-semibold">Total Tasks</div>
               <div className="text-2xl font-bold mt-0.5">{totalTasksCount}</div>
             </div>
           </div>
@@ -372,7 +392,7 @@ export default function StudentDashboard() {
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <div>
-              <div className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Tasks Completed</div>
+              <div className="text-xs text-zinc-500 dark:text-gray-400 uppercase tracking-wider font-semibold">Tasks Completed</div>
               <div className="text-2xl font-bold mt-0.5">{completedTasksCount}</div>
             </div>
           </div>
@@ -382,7 +402,7 @@ export default function StudentDashboard() {
               <Clock className="w-6 h-6" />
             </div>
             <div>
-              <div className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Pending Review</div>
+              <div className="text-xs text-zinc-500 dark:text-gray-400 uppercase tracking-wider font-semibold">Pending Review</div>
               <div className="text-2xl font-bold mt-0.5">{pendingTasksCount}</div>
             </div>
           </div>
@@ -392,7 +412,7 @@ export default function StudentDashboard() {
               <Award className="w-6 h-6" />
             </div>
             <div>
-              <div className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Completion Streak</div>
+              <div className="text-xs text-zinc-500 dark:text-gray-400 uppercase tracking-wider font-semibold">Completion Streak</div>
               <div className="text-2xl font-bold mt-0.5">{completedTasksCount * 10} pts</div>
             </div>
           </div>
@@ -400,14 +420,14 @@ export default function StudentDashboard() {
 
         {/* Active Live Class Banner */}
         {activeSession && (
-          <div className="bg-gradient-to-r from-blue-600/20 to-blue-900/20 border border-blue-500/30 p-6 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-[0_0_20px_rgba(59,130,246,0.1)]">
+          <div className="bg-blue-50/80 dark:bg-gradient-to-r dark:from-blue-600/20 dark:to-blue-900/20 border border-blue-200 dark:border-blue-500/30 p-6 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-[0_0_20px_rgba(59,130,246,0.1)]">
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                <span className="text-xs font-bold text-red-400 uppercase tracking-wider">Live Now / Upcoming</span>
+                <span className="text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">Live Now / Upcoming</span>
               </div>
-              <h2 className="text-2xl font-bold text-white">{activeSession.title}</h2>
-              <div className="flex gap-4 mt-2 text-sm text-blue-200">
+              <h2 className="text-2xl font-bold text-zinc-900 dark:text-white">{activeSession.title}</h2>
+              <div className="flex gap-4 mt-2 text-sm text-blue-700 dark:text-blue-200">
                 <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /> {activeSession.date}</span>
                 <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> {activeSession.startTime}</span>
               </div>
@@ -431,7 +451,7 @@ export default function StudentDashboard() {
             </h2>
 
             {tasks.length === 0 ? (
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-12 text-center text-gray-400">
+              <div className="portal-card rounded-2xl p-12 text-center text-zinc-500 dark:text-gray-400">
                 No tasks assigned by admin yet.
               </div>
             ) : (
@@ -447,14 +467,14 @@ export default function StudentDashboard() {
                     <div 
                       key={task.id} 
                       onClick={() => submission && handleViewFeedback(submission)}
-                      className={`bg-white/5 border rounded-2xl p-6 backdrop-blur-md hover:border-white/20 transition-all ${
-                        isUnread ? "border-secondary-500/50 bg-secondary-500/5 shadow-[0_0_15px_rgba(247,148,29,0.05)]" : "border-white/10"
+                      className={`portal-card rounded-2xl p-6 transition-all ${
+                        isUnread ? "border-secondary-500/50 bg-secondary-50/50 dark:bg-secondary-500/5 shadow-[0_0_15px_rgba(247,148,29,0.05)]" : "hover:border-zinc-300 dark:hover:border-white/20"
                       }`}
                     >
                       <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                         <div className="space-y-2 flex-1">
                           <div className="flex flex-wrap items-center gap-2.5">
-                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                            <h3 className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-2">
                               {task.title}
                               {isUnread && (
                                 <span className="w-2.5 h-2.5 rounded-full bg-secondary-500 animate-pulse" title="Unread Update" />
@@ -476,9 +496,9 @@ export default function StudentDashboard() {
                             )}
                           </div>
                           
-                          <p className="text-gray-300 text-sm font-light leading-relaxed whitespace-pre-line">{task.description}</p>
+                          <p className="text-zinc-700 dark:text-gray-300 text-sm font-light leading-relaxed whitespace-pre-line">{task.description}</p>
                           
-                          <div className="flex flex-wrap gap-4 text-xs text-gray-400 pt-2">
+                          <div className="flex flex-wrap gap-4 text-xs text-zinc-500 dark:text-gray-400 pt-2">
                             <div className="flex items-center gap-1.5">
                               <Calendar className="w-4 h-4 text-secondary-500" />
                               <span>Deadline: {task.deadline}</span>
@@ -494,16 +514,16 @@ export default function StudentDashboard() {
 
                           {/* Submission Feedbacks */}
                           {submission && (
-                            <div className="mt-4 bg-black/40 border border-white/5 rounded-xl p-4 space-y-2">
+                            <div className="mt-4 bg-zinc-50 dark:bg-black/40 border border-zinc-200 dark:border-white/5 rounded-xl p-4 space-y-2">
                               {(submission.answer || submission.note) && (
-                                <div className="text-xs text-gray-300">
-                                  <span className="font-semibold text-gray-500">Your Response: </span>
+                                <div className="text-xs text-zinc-700 dark:text-gray-300">
+                                  <span className="font-semibold text-zinc-500 dark:text-gray-500">Your Response: </span>
                                   {submission.answer || submission.note}
                                 </div>
                               )}
                               {submission.feedback && (
-                                <div className="text-xs text-amber-500 mt-2 border-t border-white/5 pt-2 font-medium">
-                                  <span className="text-gray-500 font-semibold block sm:inline">Instructor Feedback: </span>
+                                <div className="text-xs text-amber-600 dark:text-amber-500 mt-2 border-t border-zinc-200 dark:border-white/5 pt-2 font-medium">
+                                  <span className="text-zinc-500 dark:text-gray-500 font-semibold block sm:inline">Instructor Feedback: </span>
                                   {submission.feedback}
                                 </div>
                               )}
@@ -542,9 +562,9 @@ export default function StudentDashboard() {
               <span>Leaderboard</span>
             </h2>
 
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md space-y-4">
+            <div className="portal-card rounded-2xl p-6 space-y-4">
               {leaderboard.length === 0 ? (
-                <div className="text-center py-6 text-gray-400 text-sm">
+                <div className="text-center py-6 text-zinc-500 dark:text-gray-400 text-sm">
                   Completions list will appear here once assignments are approved.
                 </div>
               ) : (
@@ -554,21 +574,21 @@ export default function StudentDashboard() {
                     "bg-gray-300/20 text-gray-300 border-gray-300/30",
                     "bg-amber-600/20 text-amber-500 border-amber-600/30",
                   ];
-                  const defaultRank = "bg-white/5 text-gray-400 border-white/5";
+                  const defaultRank = "bg-zinc-100 dark:bg-white/5 text-zinc-500 dark:text-gray-400 border-zinc-200 dark:border-white/5";
                   
                   return (
-                    <div key={item.uid || item.id} className="flex items-center justify-between p-3.5 bg-black/30 border border-white/5 rounded-xl">
+                    <div key={item.uid || item.id} className="flex items-center justify-between p-3.5 bg-zinc-50 dark:bg-black/30 border border-zinc-200/50 dark:border-white/5 rounded-xl">
                       <div className="flex items-center gap-3">
                         <div className={`w-8 h-8 rounded-full border flex items-center justify-center font-bold text-sm ${rankColors[index] || defaultRank}`}>
                           {index + 1}
                         </div>
                         <div>
-                          <div className="font-semibold text-sm text-gray-200">{item.displayName || "Student"}</div>
+                          <div className="font-semibold text-sm text-zinc-800 dark:text-gray-200">{item.displayName || "Student"}</div>
                         </div>
                       </div>
                       <div className="text-right">
                         <div className="text-sm font-bold text-secondary-500">{item.completions} tasks</div>
-                        <div className="text-[9px] text-gray-500 uppercase tracking-wider font-semibold">Completed</div>
+                        <div className="text-[9px] text-zinc-500 dark:text-gray-500 uppercase tracking-wider font-semibold">Completed</div>
                       </div>
                     </div>
                   );
@@ -583,20 +603,20 @@ export default function StudentDashboard() {
                   <FileText className="w-6 h-6 text-emerald-500" />
                   <span>Study Resources</span>
                 </h2>
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md space-y-3">
+                <div className="portal-card rounded-2xl p-6 space-y-3">
                   {resources.map((res) => (
                     <a
                       key={res.id}
                       href={res.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between p-3.5 bg-black/30 border border-white/5 rounded-xl hover:border-white/20 transition-colors group"
+                      className="flex items-center justify-between p-3.5 bg-zinc-50 dark:bg-black/30 border border-zinc-200 dark:border-white/5 rounded-xl hover:border-zinc-300 dark:hover:border-white/20 transition-colors group"
                     >
                       <div>
-                        <div className="font-semibold text-sm text-gray-200 group-hover:text-white">{res.title}</div>
-                        <div className="text-[10px] text-gray-500 uppercase">{res.type || "link"}</div>
+                        <div className="font-semibold text-sm text-zinc-800 dark:text-gray-200 group-hover:text-zinc-950 dark:group-hover:text-white">{res.title}</div>
+                        <div className="text-[10px] text-zinc-500 dark:text-gray-500 uppercase">{res.type || "link"}</div>
                       </div>
-                      <ExternalLink className="w-4 h-4 text-gray-500 group-hover:text-secondary-500" />
+                      <ExternalLink className="w-4 h-4 text-zinc-400 dark:text-gray-500 group-hover:text-secondary-500" />
                     </a>
                   ))}
                 </div>
@@ -610,27 +630,35 @@ export default function StudentDashboard() {
                 <span>Attendance History</span>
               </h2>
 
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md space-y-4">
-                {classSessions.filter(s => s !== activeSession).length === 0 ? (
-                  <div className="text-center py-6 text-gray-400 text-sm">
+              <div className="portal-card rounded-2xl p-6 space-y-4">
+                {displayHistorySessions.length === 0 ? (
+                  <div className="text-center py-6 text-zinc-500 dark:text-gray-400 text-sm">
                     No past sessions found.
                   </div>
                 ) : (
-                  classSessions.filter(s => s !== activeSession).map(session => {
+                  displayHistorySessions.map(session => {
                     const attended = myAttendance.find(a => a.sessionId === session.id);
+                    const isToday = session.date === todayStr;
                     return (
-                      <div key={session.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 bg-black/30 border border-white/5 rounded-xl gap-3">
+                      <div key={session.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 bg-zinc-50 dark:bg-black/30 border border-zinc-200 dark:border-white/5 rounded-xl gap-3">
                         <div>
-                          <div className="font-semibold text-sm text-gray-200">{session.title}</div>
-                          <div className="text-[10px] text-gray-500">{session.date} • {session.startTime}</div>
+                          <div className="flex items-center gap-2">
+                            <div className="font-semibold text-sm text-zinc-800 dark:text-gray-200">{session.title}</div>
+                            {isToday && (
+                              <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 text-[10px] font-bold rounded-full uppercase">
+                                Today
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[10px] text-zinc-500">{session.date} • {session.startTime}</div>
                         </div>
                         <div className="shrink-0">
                           {attended ? (
-                            <span className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold rounded-full uppercase flex items-center gap-1">
+                            <span className="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 text-[10px] font-bold rounded-full uppercase flex items-center gap-1">
                               <CheckCircle2 className="w-3 h-3" /> Present
                             </span>
                           ) : (
-                            <span className="px-2.5 py-1 bg-zinc-800 text-zinc-400 border border-zinc-700 text-[10px] font-bold rounded-full uppercase flex items-center gap-1">
+                            <span className="px-2.5 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 text-[10px] font-bold rounded-full uppercase flex items-center gap-1">
                               <X className="w-3 h-3" /> Absent
                             </span>
                           )}
